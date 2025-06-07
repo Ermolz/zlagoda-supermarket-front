@@ -1,4 +1,6 @@
-import axiosInstance from './axiosInstance';
+// import axiosInstance from './axiosInstance';
+
+let axiosInstance;
 
 // 1. Отримати інформацію про усі товари, відсортовані за назвою
 export const getAllProducts = () => {

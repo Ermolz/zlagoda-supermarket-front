@@ -1,0 +1,325 @@
+{
+  "manager": {
+    "title": "Manager Dashboard",
+    "logout": "Logout",
+    "navigation": {
+      "employees": {
+        "title": "Employees",
+        "description": "Manage employees and search information"
+      },
+      "customers": {
+        "title": "Regular Customers",
+        "description": "Manage customers and loyalty program"
+      },
+      "products": {
+        "title": "Products",
+        "description": "Manage products and their availability"
+      },
+      "categories": {
+        "title": "Categories",
+        "description": "Manage product categories"
+      },
+      "checks": {
+        "title": "Checks",
+        "description": "View and analyze checks"
+      },
+      "reports": {
+        "title": "Reports",
+        "description": "Generate and view reports"
+      }
+    }
+  },
+  "employees": {
+    "title": "Employee Management",
+    "table": {
+      "id": "ID",
+      "surname": "Surname",
+      "name": "Name",
+      "patronymic": "Patronymic",
+      "role": "Role",
+      "salary": "Salary",
+      "dateOfBirth": "Date of Birth",
+      "dateOfStart": "Start Date",
+      "phone": "Phone",
+      "city": "City",
+      "street": "Street",
+      "zipCode": "ZIP Code",
+      "actions": "Actions"
+    },
+    "form": {
+      "add": "Add Employee",
+      "edit": "Edit Employee",
+      "labels": {
+        "surname": "Surname",
+        "name": "Name",
+        "patronymic": "Patronymic",
+        "role": "Role",
+        "salary": "Salary",
+        "dateOfBirth": "Date of Birth",
+        "dateOfStart": "Start Date",
+        "phone": "Phone",
+        "city": "City",
+        "street": "Street",
+        "zipCode": "ZIP Code"
+      },
+      "placeholders": {
+        "surname": "Enter surname",
+        "name": "Enter name",
+        "patronymic": "Enter patronymic",
+        "salary": "Enter salary",
+        "phone": "Enter phone number",
+        "city": "Enter city",
+        "street": "Enter street",
+        "zipCode": "Enter ZIP code"
+      },
+      "roles": {
+        "cashier": "Cashier",
+        "manager": "Manager"
+      }
+    },
+    "actions": {
+      "add": "Add",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "deleteConfirm": "Are you sure you want to delete this employee?",
+      "addSuccess": "Employee added successfully",
+      "editSuccess": "Employee updated successfully",
+      "deleteSuccess": "Employee deleted successfully",
+      "error": "An error occurred. Please try again."
+    }
+  },
+  "cashier": {
+    "title": "Cashier Dashboard",
+    "sell": "Cashier: Sales",
+    "logout": "Logout"
+  },
+  "products": {
+    "title": "Products List",
+    "table": {
+      "id": "ID",
+      "name": "Name",
+      "category": "Category",
+      "price": "Price",
+      "quantity": "Quantity",
+      "promotional": "Promotional",
+      "actions": "Actions"
+    },
+    "form": {
+      "add": "Add Product",
+      "edit": "Edit Product",
+      "labels": {
+        "id": "Product ID",
+        "name": "Product Name",
+        "category": "Category",
+        "price": "Price",
+        "quantity": "Quantity",
+        "characteristics": "Characteristics",
+        "promotional": "Promotional Product"
+      },
+      "placeholders": {
+        "selectCategory": "Select category"
+      }
+    },
+    "filters": {
+      "inStock": "Availability",
+      "available": "In Stock",
+      "notAvailable": "Out of Stock",
+      "searchPlaceholder": "Search by name or description"
+    },
+    "actions": {
+      "add": "Add",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "deleteConfirm": "Are you sure you want to delete this product?",
+      "addSuccess": "Product added successfully",
+      "editSuccess": "Product updated successfully",
+      "deleteSuccess": "Product deleted successfully",
+      "error": "An error occurred. Please try again."
+    }
+  },
+  "categories": {
+    "title": "Category Management",
+    "table": {
+      "id": "ID",
+      "name": "Name",
+      "description": "Description",
+      "actions": "Actions"
+    },
+    "form": {
+      "add": "Add Category",
+      "edit": "Edit Category",
+      "labels": {
+        "name": "Name",
+        "description": "Description"
+      },
+      "placeholders": {
+        "name": "Enter category name",
+        "description": "Enter category description"
+      }
+    },
+    "actions": {
+      "add": "Add",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "deleteConfirm": "Are you sure you want to delete this category?",
+      "addSuccess": "Category added successfully",
+      "editSuccess": "Category updated successfully",
+      "deleteSuccess": "Category deleted successfully",
+      "error": "An error occurred. Please try again."
+    }
+  },
+  "customers": {
+    "title": "Customers List",
+    "table": {
+      "id": "Customer Card",
+      "surname": "Surname",
+      "name": "Name",
+      "patronymic": "Patronymic",
+      "phone": "Phone",
+      "discount": "Discount",
+      "actions": "Actions"
+    },
+    "form": {
+      "add": "Add Customer",
+      "edit": "Edit Customer",
+      "labels": {
+        "cardNumber": "Card Number",
+        "surname": "Surname",
+        "name": "Name",
+        "patronymic": "Patronymic",
+        "phone": "Phone Number",
+        "city": "City",
+        "street": "Street",
+        "zipCode": "ZIP Code",
+        "discount": "Discount Percentage"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search by surname or card number"
+    },
+    "actions": {
+      "add": "Add",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel"
+    }
+  },
+  "checks": {
+    "title": "Checks",
+    "reportType": "Report Type",
+    "filters": {
+      "allChecks": "All checks for period",
+      "cashierChecks": "Checks by specific cashier",
+      "productChecks": "Checks with specific product",
+      "cashier": "Cashier",
+      "selectCashier": "Select cashier",
+      "product": "Product",
+      "selectProduct": "Select product",
+      "startDate": "Start date",
+      "endDate": "End date"
+    },
+    "table": {
+      "checkNumber": "Check number",
+      "cashier": "Cashier",
+      "date": "Date",
+      "products": "Products",
+      "total": "Total",
+      "vat": "VAT"
+    },
+    "actions": {
+      "generateReport": "Generate Report",
+      "generating": "Generating report...",
+      "print": "Print",
+      "view": "View"
+    },
+    "noData": "No data to display",
+    "loading": "Loading..."
+  },
+  "reports": {
+    "title": "Reports",
+    "types": {
+      "employees": "Employees by position",
+      "cashierChecks": "Checks by specific cashier",
+      "allChecks": "All checks for period",
+      "productChecks": "Checks with specific product",
+      "soldProducts": "Sold products",
+      "customerPurchases": "Customer purchases"
+    },
+    "filters": {
+      "position": "Position",
+      "allPositions": "All positions",
+      "cashier": "Cashier",
+      "manager": "Manager",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "product": "Product",
+      "category": "Category",
+      "customer": "Customer"
+    },
+    "actions": {
+      "generate": "Generate",
+      "print": "Print",
+      "export": "Export"
+    },
+    "messages": {
+      "generating": "Generating report...",
+      "success": "Report generated successfully",
+      "error": "Error generating report"
+    }
+  },
+  "common": {
+    "currency": "UAH",
+    "quantity": "pcs",
+    "buttons": {
+      "add": "Add",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "close": "Close",
+      "confirm": "Confirm",
+      "search": "Search",
+      "filter": "Filter",
+      "clear": "Clear",
+      "apply": "Apply",
+      "reset": "Reset"
+    },
+    "messages": {
+      "loading": "Loading...",
+      "error": "Error",
+      "success": "Success",
+      "confirmDelete": "Are you sure?",
+      "noData": "No data available",
+      "required": "This field is required",
+      "invalidFormat": "Invalid format",
+      "saved": "Saved",
+      "deleted": "Deleted",
+      "saving": "Saving..."
+    },
+    "filters": {
+      "sortBy": "Sort by",
+      "filterBy": "Filter by",
+      "search": "Search",
+      "from": "From",
+      "to": "To",
+      "all": "All"
+    },
+    "yes": "Yes",
+    "no": "No",
+    "selectLanguage": "Select language",
+    "noLanguagesFound": "No languages found"
+  }
+} 

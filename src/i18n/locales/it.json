@@ -1,0 +1,325 @@
+{
+  "manager": {
+    "title": "Pannello Manager",
+    "logout": "Esci",
+    "navigation": {
+      "employees": {
+        "title": "Dipendenti",
+        "description": "Gestisci dipendenti e cerca informazioni"
+      },
+      "customers": {
+        "title": "Clienti Regolari",
+        "description": "Gestisci clienti e programma fedeltà"
+      },
+      "products": {
+        "title": "Prodotti",
+        "description": "Gestisci prodotti e disponibilità"
+      },
+      "categories": {
+        "title": "Categorie",
+        "description": "Gestisci categorie di prodotti"
+      },
+      "checks": {
+        "title": "Scontrini",
+        "description": "Visualizza e analizza scontrini"
+      },
+      "reports": {
+        "title": "Rapporti",
+        "description": "Genera e visualizza rapporti"
+      }
+    }
+  },
+  "employees": {
+    "title": "Gestione Dipendenti",
+    "table": {
+      "id": "ID",
+      "surname": "Cognome",
+      "name": "Nome",
+      "patronymic": "Patronimico",
+      "role": "Ruolo",
+      "salary": "Stipendio",
+      "dateOfBirth": "Data di Nascita",
+      "dateOfStart": "Data di Inizio",
+      "phone": "Telefono",
+      "city": "Città",
+      "street": "Via",
+      "zipCode": "CAP",
+      "actions": "Azioni"
+    },
+    "form": {
+      "add": "Aggiungi Dipendente",
+      "edit": "Modifica Dipendente",
+      "labels": {
+        "surname": "Cognome",
+        "name": "Nome",
+        "patronymic": "Patronimico",
+        "role": "Ruolo",
+        "salary": "Stipendio",
+        "dateOfBirth": "Data di Nascita",
+        "dateOfStart": "Data di Inizio",
+        "phone": "Telefono",
+        "city": "Città",
+        "street": "Via",
+        "zipCode": "CAP"
+      },
+      "placeholders": {
+        "surname": "Inserisci cognome",
+        "name": "Inserisci nome",
+        "patronymic": "Inserisci patronimico",
+        "salary": "Inserisci stipendio",
+        "phone": "Inserisci numero di telefono",
+        "city": "Inserisci città",
+        "street": "Inserisci via",
+        "zipCode": "Inserisci CAP"
+      },
+      "roles": {
+        "cashier": "Cassiere",
+        "manager": "Manager"
+      }
+    },
+    "actions": {
+      "add": "Aggiungi",
+      "edit": "Modifica",
+      "delete": "Elimina",
+      "save": "Salva",
+      "cancel": "Annulla"
+    },
+    "messages": {
+      "deleteConfirm": "Sei sicuro di voler eliminare questo dipendente?",
+      "addSuccess": "Dipendente aggiunto con successo",
+      "editSuccess": "Dipendente aggiornato con successo",
+      "deleteSuccess": "Dipendente eliminato con successo",
+      "error": "Si è verificato un errore. Riprova."
+    }
+  },
+  "cashier": {
+    "title": "Pannello Cassiere",
+    "sell": "Cassiere: Vendite",
+    "logout": "Esci"
+  },
+  "products": {
+    "title": "Lista Prodotti",
+    "table": {
+      "id": "ID",
+      "name": "Nome",
+      "category": "Categoria",
+      "price": "Prezzo",
+      "quantity": "Quantità",
+      "promotional": "Promozionale",
+      "actions": "Azioni"
+    },
+    "form": {
+      "add": "Aggiungi Prodotto",
+      "edit": "Modifica Prodotto",
+      "labels": {
+        "id": "ID Prodotto",
+        "name": "Nome Prodotto",
+        "category": "Categoria",
+        "price": "Prezzo",
+        "quantity": "Quantità",
+        "characteristics": "Caratteristiche",
+        "promotional": "Prodotto Promozionale"
+      },
+      "placeholders": {
+        "selectCategory": "Seleziona categoria"
+      }
+    },
+    "filters": {
+      "inStock": "Disponibilità",
+      "available": "Disponibile",
+      "notAvailable": "Non Disponibile",
+      "searchPlaceholder": "Cerca per nome o descrizione"
+    },
+    "actions": {
+      "add": "Aggiungi",
+      "edit": "Modifica",
+      "delete": "Elimina",
+      "save": "Salva",
+      "cancel": "Annulla"
+    },
+    "messages": {
+      "deleteConfirm": "Sei sicuro di voler eliminare questo prodotto?",
+      "addSuccess": "Prodotto aggiunto con successo",
+      "editSuccess": "Prodotto aggiornato con successo",
+      "deleteSuccess": "Prodotto eliminato con successo",
+      "error": "Si è verificato un errore. Riprova."
+    }
+  },
+  "categories": {
+    "title": "Gestione Categorie",
+    "table": {
+      "id": "ID",
+      "name": "Nome",
+      "description": "Descrizione",
+      "actions": "Azioni"
+    },
+    "form": {
+      "add": "Aggiungi Categoria",
+      "edit": "Modifica Categoria",
+      "labels": {
+        "name": "Nome",
+        "description": "Descrizione"
+      },
+      "placeholders": {
+        "name": "Inserisci nome categoria",
+        "description": "Inserisci descrizione categoria"
+      }
+    },
+    "actions": {
+      "add": "Aggiungi",
+      "edit": "Modifica",
+      "delete": "Elimina",
+      "save": "Salva",
+      "cancel": "Annulla"
+    },
+    "messages": {
+      "deleteConfirm": "Sei sicuro di voler eliminare questa categoria?",
+      "addSuccess": "Categoria aggiunta con successo",
+      "editSuccess": "Categoria aggiornata con successo",
+      "deleteSuccess": "Categoria eliminata con successo",
+      "error": "Si è verificato un errore. Riprova."
+    }
+  },
+  "customers": {
+    "title": "Lista Clienti",
+    "table": {
+      "id": "Carta Cliente",
+      "surname": "Cognome",
+      "name": "Nome",
+      "patronymic": "Patronimico",
+      "phone": "Telefono",
+      "discount": "Sconto",
+      "actions": "Azioni"
+    },
+    "form": {
+      "add": "Aggiungi Cliente",
+      "edit": "Modifica Cliente",
+      "labels": {
+        "cardNumber": "Numero Carta",
+        "surname": "Cognome",
+        "name": "Nome",
+        "patronymic": "Patronimico",
+        "phone": "Numero di Telefono",
+        "city": "Città",
+        "street": "Via",
+        "zipCode": "CAP",
+        "discount": "Percentuale Sconto"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Cerca per cognome o numero carta"
+    },
+    "actions": {
+      "add": "Aggiungi",
+      "edit": "Modifica",
+      "delete": "Elimina",
+      "save": "Salva",
+      "cancel": "Annulla"
+    }
+  },
+  "checks": {
+    "title": "Scontrini",
+    "reportType": "Tipo di Rapporto",
+    "filters": {
+      "allChecks": "Tutti gli scontrini del periodo",
+      "cashierChecks": "Scontrini per cassiere specifico",
+      "productChecks": "Scontrini con prodotto specifico",
+      "cashier": "Cassiere",
+      "selectCashier": "Seleziona cassiere",
+      "product": "Prodotto",
+      "selectProduct": "Seleziona prodotto",
+      "startDate": "Data inizio",
+      "endDate": "Data fine"
+    },
+    "table": {
+      "checkNumber": "Numero scontrino",
+      "cashier": "Cassiere",
+      "date": "Data",
+      "products": "Prodotti",
+      "total": "Totale",
+      "vat": "IVA"
+    },
+    "actions": {
+      "generateReport": "Genera Rapporto",
+      "generating": "Generazione rapporto...",
+      "print": "Stampa",
+      "view": "Visualizza"
+    },
+    "noData": "Nessun dato da visualizzare",
+    "loading": "Caricamento..."
+  },
+  "reports": {
+    "title": "Rapporti",
+    "types": {
+      "employees": "Dipendenti per posizione",
+      "cashierChecks": "Scontrini per cassiere specifico",
+      "allChecks": "Tutti gli scontrini del periodo",
+      "productChecks": "Scontrini con prodotto specifico",
+      "soldProducts": "Prodotti venduti",
+      "customerPurchases": "Acquisti clienti"
+    },
+    "filters": {
+      "position": "Posizione",
+      "allPositions": "Tutte le posizioni",
+      "cashier": "Cassiere",
+      "manager": "Manager",
+      "startDate": "Data inizio",
+      "endDate": "Data fine",
+      "product": "Prodotto",
+      "category": "Categoria",
+      "customer": "Cliente"
+    },
+    "actions": {
+      "generate": "Genera",
+      "print": "Stampa",
+      "export": "Esporta"
+    },
+    "messages": {
+      "generating": "Generazione rapporto...",
+      "success": "Rapporto generato con successo",
+      "error": "Errore durante la generazione del rapporto"
+    }
+  },
+  "common": {
+    "currency": "EUR",
+    "quantity": "pz",
+    "buttons": {
+      "add": "Aggiungi",
+      "edit": "Modifica",
+      "delete": "Elimina",
+      "save": "Salva",
+      "cancel": "Annulla",
+      "close": "Chiudi",
+      "confirm": "Conferma",
+      "search": "Cerca",
+      "filter": "Filtra",
+      "clear": "Pulisci",
+      "apply": "Applica",
+      "reset": "Reimposta"
+    },
+    "messages": {
+      "loading": "Caricamento...",
+      "error": "Errore",
+      "success": "Successo",
+      "confirmDelete": "Sei sicuro?",
+      "noData": "Nessun dato disponibile",
+      "required": "Questo campo è obbligatorio",
+      "invalidFormat": "Formato non valido",
+      "saved": "Salvato",
+      "deleted": "Eliminato",
+      "saving": "Salvataggio..."
+    },
+    "filters": {
+      "sortBy": "Ordina per",
+      "filterBy": "Filtra per",
+      "search": "Cerca",
+      "from": "Da",
+      "to": "A",
+      "all": "Tutti"
+    },
+    "yes": "Sì",
+    "no": "No",
+    "selectLanguage": "Seleziona lingua",
+    "noLanguagesFound": "Nessuna lingua trovata"
+  }
+} 

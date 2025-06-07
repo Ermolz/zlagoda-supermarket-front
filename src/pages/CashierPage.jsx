@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import ProductsTable from '../components/ProductsTable';
 import ClientsTable from '../components/ClientsTable';
-import SalesList from '../components/SalesList';
-import SaleDetails from '../components/SaleDetails';
+// import SalesList from '../components/SalesList';
+// import SaleDetails from '../components/SaleDetails';
 import ProductSearch from '../components/ProductSearch';
-import ClientForm from '../components/ClientForm';
-import SaleForm from '../components/SaleForm';
-import Profile from '../components/Profile';
+// import ClientForm from '../components/ClientForm';
+// import SaleForm from '../components/SaleForm';
+// import Profile from '../components/Profile';
 
 const CashierPage = () => {
   const [activeTab, setActiveTab] = useState('products');
@@ -41,22 +41,22 @@ const CashierPage = () => {
           </>
         )}
 
-        {activeTab === 'clients' && (
-          <>
-            <ClientsTable />
-            <ClientForm />
-          </>
-        )}
+        {/*{activeTab === 'clients' && (*/}
+        {/*  <>*/}
+        {/*    <ClientsTable />*/}
+        {/*    <ClientForm />*/}
+        {/*  </>*/}
+        {/*)}*/}
 
-        {activeTab === 'sales' && (
-          <>
-            <SaleForm />
-            <SalesList onSelectSale={setSelectedSaleId} />
-            {selectedSaleId && <SaleDetails saleId={selectedSaleId} />}
-          </>
-        )}
+        {/*{activeTab === 'sales' && (*/}
+        {/*  <>*/}
+        {/*    <SaleForm />*/}
+        {/*    <SalesList onSelectSale={setSelectedSaleId} />*/}
+        {/*    {selectedSaleId && <SaleDetails saleId={selectedSaleId} />}*/}
+        {/*  </>*/}
+        {/*)}*/}
 
-        {activeTab === 'profile' && <Profile />}
+        {/*{activeTab === 'profile' && <Profile />}*/}
       </div>
     </div>
   );

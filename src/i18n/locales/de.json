@@ -1,0 +1,325 @@
+{
+  "manager": {
+    "title": "Manager-Dashboard",
+    "logout": "Abmelden",
+    "navigation": {
+      "employees": {
+        "title": "Mitarbeiter",
+        "description": "Mitarbeiter verwalten und Informationen suchen"
+      },
+      "customers": {
+        "title": "Stammkunden",
+        "description": "Kunden und Treueprogramm verwalten"
+      },
+      "products": {
+        "title": "Produkte",
+        "description": "Produkte und Verfügbarkeit verwalten"
+      },
+      "categories": {
+        "title": "Kategorien",
+        "description": "Produktkategorien verwalten"
+      },
+      "checks": {
+        "title": "Belege",
+        "description": "Belege anzeigen und analysieren"
+      },
+      "reports": {
+        "title": "Berichte",
+        "description": "Berichte erstellen und anzeigen"
+      }
+    }
+  },
+  "employees": {
+    "title": "Mitarbeiterverwaltung",
+    "table": {
+      "id": "ID",
+      "surname": "Nachname",
+      "name": "Vorname",
+      "patronymic": "Vatersname",
+      "role": "Position",
+      "salary": "Gehalt",
+      "dateOfBirth": "Geburtsdatum",
+      "dateOfStart": "Eintrittsdatum",
+      "phone": "Telefon",
+      "city": "Stadt",
+      "street": "Straße",
+      "zipCode": "PLZ",
+      "actions": "Aktionen"
+    },
+    "form": {
+      "add": "Mitarbeiter hinzufügen",
+      "edit": "Mitarbeiter bearbeiten",
+      "labels": {
+        "surname": "Nachname",
+        "name": "Vorname",
+        "patronymic": "Vatersname",
+        "role": "Position",
+        "salary": "Gehalt",
+        "dateOfBirth": "Geburtsdatum",
+        "dateOfStart": "Eintrittsdatum",
+        "phone": "Telefon",
+        "city": "Stadt",
+        "street": "Straße",
+        "zipCode": "PLZ"
+      },
+      "placeholders": {
+        "surname": "Nachname eingeben",
+        "name": "Vorname eingeben",
+        "patronymic": "Vatersname eingeben",
+        "salary": "Gehalt eingeben",
+        "phone": "Telefonnummer eingeben",
+        "city": "Stadt eingeben",
+        "street": "Straße eingeben",
+        "zipCode": "PLZ eingeben"
+      },
+      "roles": {
+        "cashier": "Kassierer",
+        "manager": "Manager"
+      }
+    },
+    "actions": {
+      "add": "Hinzufügen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "save": "Speichern",
+      "cancel": "Abbrechen"
+    },
+    "messages": {
+      "deleteConfirm": "Sind Sie sicher, dass Sie diesen Mitarbeiter löschen möchten?",
+      "addSuccess": "Mitarbeiter erfolgreich hinzugefügt",
+      "editSuccess": "Mitarbeiter erfolgreich aktualisiert",
+      "deleteSuccess": "Mitarbeiter erfolgreich gelöscht",
+      "error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+    }
+  },
+  "cashier": {
+    "title": "Kassierer-Dashboard",
+    "sell": "Kassierer: Verkauf",
+    "logout": "Abmelden"
+  },
+  "products": {
+    "title": "Produktliste",
+    "table": {
+      "id": "ID",
+      "name": "Name",
+      "category": "Kategorie",
+      "price": "Preis",
+      "quantity": "Menge",
+      "promotional": "Werbeaktion",
+      "actions": "Aktionen"
+    },
+    "form": {
+      "add": "Produkt hinzufügen",
+      "edit": "Produkt bearbeiten",
+      "labels": {
+        "id": "Produkt-ID",
+        "name": "Produktname",
+        "category": "Kategorie",
+        "price": "Preis",
+        "quantity": "Menge",
+        "characteristics": "Eigenschaften",
+        "promotional": "Werbeprodukt"
+      },
+      "placeholders": {
+        "selectCategory": "Kategorie auswählen"
+      }
+    },
+    "filters": {
+      "inStock": "Verfügbarkeit",
+      "available": "Verfügbar",
+      "notAvailable": "Nicht verfügbar",
+      "searchPlaceholder": "Nach Name oder Beschreibung suchen"
+    },
+    "actions": {
+      "add": "Hinzufügen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "save": "Speichern",
+      "cancel": "Abbrechen"
+    },
+    "messages": {
+      "deleteConfirm": "Sind Sie sicher, dass Sie dieses Produkt löschen möchten?",
+      "addSuccess": "Produkt erfolgreich hinzugefügt",
+      "editSuccess": "Produkt erfolgreich aktualisiert",
+      "deleteSuccess": "Produkt erfolgreich gelöscht",
+      "error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+    }
+  },
+  "categories": {
+    "title": "Kategorieverwaltung",
+    "table": {
+      "id": "ID",
+      "name": "Name",
+      "description": "Beschreibung",
+      "actions": "Aktionen"
+    },
+    "form": {
+      "add": "Kategorie hinzufügen",
+      "edit": "Kategorie bearbeiten",
+      "labels": {
+        "name": "Name",
+        "description": "Beschreibung"
+      },
+      "placeholders": {
+        "name": "Kategorienamen eingeben",
+        "description": "Kategoriebeschreibung eingeben"
+      }
+    },
+    "actions": {
+      "add": "Hinzufügen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "save": "Speichern",
+      "cancel": "Abbrechen"
+    },
+    "messages": {
+      "deleteConfirm": "Sind Sie sicher, dass Sie diese Kategorie löschen möchten?",
+      "addSuccess": "Kategorie erfolgreich hinzugefügt",
+      "editSuccess": "Kategorie erfolgreich aktualisiert",
+      "deleteSuccess": "Kategorie erfolgreich gelöscht",
+      "error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+    }
+  },
+  "customers": {
+    "title": "Kundenliste",
+    "table": {
+      "id": "Kundenkarte",
+      "surname": "Nachname",
+      "name": "Vorname",
+      "patronymic": "Vatersname",
+      "phone": "Telefon",
+      "discount": "Rabatt",
+      "actions": "Aktionen"
+    },
+    "form": {
+      "add": "Kunde hinzufügen",
+      "edit": "Kunde bearbeiten",
+      "labels": {
+        "cardNumber": "Kartennummer",
+        "surname": "Nachname",
+        "name": "Vorname",
+        "patronymic": "Vatersname",
+        "phone": "Telefonnummer",
+        "city": "Stadt",
+        "street": "Straße",
+        "zipCode": "PLZ",
+        "discount": "Rabatt in Prozent"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Nach Nachname oder Kartennummer suchen"
+    },
+    "actions": {
+      "add": "Hinzufügen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "save": "Speichern",
+      "cancel": "Abbrechen"
+    }
+  },
+  "checks": {
+    "title": "Belege",
+    "reportType": "Berichtstyp",
+    "filters": {
+      "allChecks": "Alle Belege für den Zeitraum",
+      "cashierChecks": "Belege eines bestimmten Kassierers",
+      "productChecks": "Belege mit bestimmtem Produkt",
+      "cashier": "Kassierer",
+      "selectCashier": "Kassierer auswählen",
+      "product": "Produkt",
+      "selectProduct": "Produkt auswählen",
+      "startDate": "Startdatum",
+      "endDate": "Enddatum"
+    },
+    "table": {
+      "checkNumber": "Belegnummer",
+      "cashier": "Kassierer",
+      "date": "Datum",
+      "products": "Produkte",
+      "total": "Gesamt",
+      "vat": "MwSt"
+    },
+    "actions": {
+      "generateReport": "Bericht generieren",
+      "generating": "Bericht wird generiert...",
+      "print": "Drucken",
+      "view": "Ansehen"
+    },
+    "noData": "Keine Daten zum Anzeigen",
+    "loading": "Wird geladen..."
+  },
+  "reports": {
+    "title": "Berichte",
+    "types": {
+      "employees": "Mitarbeiter nach Position",
+      "cashierChecks": "Belege eines bestimmten Kassierers",
+      "allChecks": "Alle Belege für den Zeitraum",
+      "productChecks": "Belege mit bestimmtem Produkt",
+      "soldProducts": "Verkaufte Produkte",
+      "customerPurchases": "Kundenkäufe"
+    },
+    "filters": {
+      "position": "Position",
+      "allPositions": "Alle Positionen",
+      "cashier": "Kassierer",
+      "manager": "Manager",
+      "startDate": "Startdatum",
+      "endDate": "Enddatum",
+      "product": "Produkt",
+      "category": "Kategorie",
+      "customer": "Kunde"
+    },
+    "actions": {
+      "generate": "Generieren",
+      "print": "Drucken",
+      "export": "Exportieren"
+    },
+    "messages": {
+      "generating": "Bericht wird generiert...",
+      "success": "Bericht erfolgreich generiert",
+      "error": "Fehler beim Generieren des Berichts"
+    }
+  },
+  "common": {
+    "currency": "EUR",
+    "quantity": "Stk",
+    "buttons": {
+      "add": "Hinzufügen",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "close": "Schließen",
+      "confirm": "Bestätigen",
+      "search": "Suchen",
+      "filter": "Filtern",
+      "clear": "Löschen",
+      "apply": "Anwenden",
+      "reset": "Zurücksetzen"
+    },
+    "messages": {
+      "loading": "Wird geladen...",
+      "error": "Fehler",
+      "success": "Erfolgreich",
+      "confirmDelete": "Sind Sie sicher?",
+      "noData": "Keine Daten verfügbar",
+      "required": "Dieses Feld ist erforderlich",
+      "invalidFormat": "Ungültiges Format",
+      "saved": "Gespeichert",
+      "deleted": "Gelöscht",
+      "saving": "Wird gespeichert..."
+    },
+    "filters": {
+      "sortBy": "Sortieren nach",
+      "filterBy": "Filtern nach",
+      "search": "Suchen",
+      "from": "Von",
+      "to": "Bis",
+      "all": "Alle"
+    },
+    "yes": "Ja",
+    "no": "Nein",
+    "selectLanguage": "Sprache auswählen",
+    "noLanguagesFound": "Keine Sprachen gefunden"
+  }
+} 

@@ -1,0 +1,325 @@
+{
+  "manager": {
+    "title": "Панель менеджера",
+    "logout": "Вийти",
+    "navigation": {
+      "employees": {
+        "title": "Працівники",
+        "description": "Управління працівниками та пошук інформації"
+      },
+      "customers": {
+        "title": "Постійні клієнти",
+        "description": "Управління клієнтами та програмою лояльності"
+      },
+      "products": {
+        "title": "Товари",
+        "description": "Управління товарами та їх наявністю"
+      },
+      "categories": {
+        "title": "Категорії",
+        "description": "Управління категоріями товарів"
+      },
+      "checks": {
+        "title": "Чеки",
+        "description": "Перегляд та аналіз чеків"
+      },
+      "reports": {
+        "title": "Звіти",
+        "description": "Генерація та перегляд звітів"
+      }
+    }
+  },
+  "employees": {
+    "title": "Управління працівниками",
+    "table": {
+      "id": "ID",
+      "surname": "Прізвище",
+      "name": "Ім'я",
+      "patronymic": "По батькові",
+      "role": "Посада",
+      "salary": "Зарплата",
+      "dateOfBirth": "Дата народження",
+      "dateOfStart": "Дата початку роботи",
+      "phone": "Телефон",
+      "city": "Місто",
+      "street": "Вулиця",
+      "zipCode": "Поштовий індекс",
+      "actions": "Дії"
+    },
+    "form": {
+      "add": "Додати працівника",
+      "edit": "Редагувати працівника",
+      "labels": {
+        "surname": "Прізвище",
+        "name": "Ім'я",
+        "patronymic": "По батькові",
+        "role": "Посада",
+        "salary": "Зарплата",
+        "dateOfBirth": "Дата народження",
+        "dateOfStart": "Дата початку роботи",
+        "phone": "Телефон",
+        "city": "Місто",
+        "street": "Вулиця",
+        "zipCode": "Поштовий індекс"
+      },
+      "placeholders": {
+        "surname": "Введіть прізвище",
+        "name": "Введіть ім'я",
+        "patronymic": "Введіть по батькові",
+        "salary": "Введіть зарплату",
+        "phone": "Введіть номер телефону",
+        "city": "Введіть місто",
+        "street": "Введіть вулицю",
+        "zipCode": "Введіть поштовий індекс"
+      },
+      "roles": {
+        "cashier": "Касир",
+        "manager": "Менеджер"
+      }
+    },
+    "actions": {
+      "add": "Додати",
+      "edit": "Редагувати",
+      "delete": "Видалити",
+      "save": "Зберегти",
+      "cancel": "Скасувати"
+    },
+    "messages": {
+      "deleteConfirm": "Ви впевнені, що хочете видалити цього працівника?",
+      "addSuccess": "Працівника успішно додано",
+      "editSuccess": "Дані працівника успішно оновлено",
+      "deleteSuccess": "Працівника успішно видалено",
+      "error": "Виникла помилка. Спробуйте ще раз."
+    }
+  },
+  "cashier": {
+    "title": "Панель касира",
+    "sell": "Касир: Продаж",
+    "logout": "Вийти"
+  },
+  "checks": {
+    "title": "Чеки",
+    "reportType": "Тип звіту",
+    "filters": {
+      "allChecks": "Всі чеки за період",
+      "cashierChecks": "Чеки конкретного касира",
+      "productChecks": "Чеки з конкретним товаром",
+      "cashier": "Касир",
+      "selectCashier": "Оберіть касира",
+      "product": "Товар",
+      "selectProduct": "Оберіть товар",
+      "startDate": "Початкова дата",
+      "endDate": "Кінцева дата"
+    },
+    "table": {
+      "checkNumber": "Номер чеку",
+      "cashier": "Касир",
+      "date": "Дата",
+      "products": "Товари",
+      "total": "Сума",
+      "vat": "ПДВ"
+    },
+    "actions": {
+      "generateReport": "Сформувати звіт",
+      "generating": "Формування звіту...",
+      "print": "Друкувати",
+      "view": "Переглянути"
+    },
+    "noData": "Немає даних для відображення",
+    "loading": "Завантаження..."
+  },
+  "reports": {
+    "title": "Звіти",
+    "types": {
+      "employees": "Працівники за посадою",
+      "cashierChecks": "Чеки конкретного касира",
+      "allChecks": "Всі чеки за період",
+      "productChecks": "Чеки з конкретним товаром",
+      "soldProducts": "Продані товари",
+      "customerPurchases": "Покупки клієнтів"
+    },
+    "filters": {
+      "position": "Посада",
+      "allPositions": "Всі посади",
+      "cashier": "Касир",
+      "manager": "Менеджер",
+      "startDate": "Початкова дата",
+      "endDate": "Кінцева дата",
+      "product": "Товар",
+      "category": "Категорія",
+      "customer": "Клієнт"
+    },
+    "actions": {
+      "generate": "Сформувати",
+      "print": "Друкувати",
+      "export": "Експортувати"
+    },
+    "messages": {
+      "generating": "Формування звіту...",
+      "success": "Звіт успішно сформовано",
+      "error": "Помилка при формуванні звіту"
+    }
+  },
+  "products": {
+    "title": "Список товарів",
+    "table": {
+      "id": "ID",
+      "name": "Назва",
+      "category": "Категорія",
+      "price": "Ціна",
+      "quantity": "Кількість",
+      "promotional": "Акційний",
+      "actions": "Дії"
+    },
+    "form": {
+      "add": "Додати товар",
+      "edit": "Редагувати товар",
+      "labels": {
+        "id": "ID товару",
+        "name": "Назва товару",
+        "category": "Категорія",
+        "price": "Ціна",
+        "quantity": "Кількість",
+        "characteristics": "Характеристики",
+        "promotional": "Акційний товар"
+      },
+      "placeholders": {
+        "selectCategory": "Оберіть категорію"
+      }
+    },
+    "filters": {
+      "inStock": "Наявність",
+      "available": "В наявності",
+      "notAvailable": "Немає в наявності",
+      "searchPlaceholder": "Пошук за назвою або описом"
+    },
+    "actions": {
+      "add": "Додати",
+      "edit": "Редагувати",
+      "delete": "Видалити",
+      "save": "Зберегти",
+      "cancel": "Скасувати"
+    },
+    "messages": {
+      "deleteConfirm": "Ви впевнені, що хочете видалити цей товар?",
+      "addSuccess": "Товар успішно додано",
+      "editSuccess": "Товар успішно оновлено",
+      "deleteSuccess": "Товар успішно видалено",
+      "error": "Виникла помилка. Спробуйте ще раз."
+    }
+  },
+  "customers": {
+    "title": "Список клієнтів",
+    "table": {
+      "id": "Карта клієнта",
+      "surname": "Прізвище",
+      "name": "Ім'я",
+      "patronymic": "По батькові",
+      "phone": "Телефон",
+      "discount": "Знижка",
+      "actions": "Дії"
+    },
+    "form": {
+      "add": "Додати клієнта",
+      "edit": "Редагувати клієнта",
+      "labels": {
+        "cardNumber": "Номер карти",
+        "surname": "Прізвище",
+        "name": "Ім'я",
+        "patronymic": "По батькові",
+        "phone": "Номер телефону",
+        "city": "Місто",
+        "street": "Вулиця",
+        "zipCode": "Поштовий індекс",
+        "discount": "Відсоток знижки"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Пошук за прізвищем або номером карти"
+    },
+    "actions": {
+      "add": "Додати",
+      "edit": "Редагувати",
+      "delete": "Видалити",
+      "save": "Зберегти",
+      "cancel": "Скасувати"
+    }
+  },
+  "common": {
+    "currency": "грн",
+    "quantity": "шт",
+    "buttons": {
+      "add": "Додати",
+      "edit": "Редагувати",
+      "delete": "Видалити",
+      "save": "Зберегти",
+      "cancel": "Скасувати",
+      "close": "Закрити",
+      "confirm": "Підтвердити",
+      "search": "Пошук",
+      "filter": "Фільтрувати",
+      "clear": "Очистити",
+      "apply": "Застосувати",
+      "reset": "Скинути"
+    },
+    "messages": {
+      "loading": "Завантаження...",
+      "error": "Помилка",
+      "success": "Успішно",
+      "confirmDelete": "Ви впевнені?",
+      "noData": "Немає даних",
+      "required": "Це поле обов'язкове",
+      "invalidFormat": "Невірний формат",
+      "saved": "Збережено",
+      "deleted": "Видалено",
+      "saving": "Збереження..."
+    },
+    "filters": {
+      "sortBy": "Сортувати за",
+      "filterBy": "Фільтрувати за",
+      "search": "Пошук",
+      "from": "Від",
+      "to": "До",
+      "all": "Всі",
+      "yes": "Так",
+      "no": "Ні"
+    },
+    "selectLanguage": "Оберіть мову",
+    "noLanguagesFound": "Мову не знайдено"
+  },
+  "categories": {
+    "title": "Управління категоріями",
+    "table": {
+      "id": "ID",
+      "name": "Назва",
+      "description": "Опис",
+      "actions": "Дії"
+    },
+    "form": {
+      "add": "Додати категорію",
+      "edit": "Редагувати категорію",
+      "labels": {
+        "name": "Назва",
+        "description": "Опис"
+      },
+      "placeholders": {
+        "name": "Введіть назву категорії",
+        "description": "Введіть опис категорії"
+      }
+    },
+    "actions": {
+      "add": "Додати",
+      "edit": "Редагувати",
+      "delete": "Видалити",
+      "save": "Зберегти",
+      "cancel": "Скасувати"
+    },
+    "messages": {
+      "deleteConfirm": "Ви впевнені, що хочете видалити цю категорію?",
+      "addSuccess": "Категорію успішно додано",
+      "editSuccess": "Категорію успішно оновлено",
+      "deleteSuccess": "Категорію успішно видалено",
+      "error": "Виникла помилка. Спробуйте ще раз."
+    }
+  }
+} 
