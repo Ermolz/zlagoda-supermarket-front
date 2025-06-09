@@ -1,20 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const fakeLoginApi = async (login, password) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (login === 'manager') {
-        resolve({ accessToken: 'manager-token', role: 'manager' });
-      } else if (login === 'cashier') {
-        resolve({ accessToken: 'cashier-token', role: 'cashier' });
-      } else {
-        reject(new Error('Невірний логін або пароль'));
-      }
-    }, 700);
-  });
-};
-
 const LoginPage = () => {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
@@ -32,14 +18,43 @@ const LoginPage = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+  
     try {
-      const { accessToken, role } = await fakeLoginApi(login, password);
-      localStorage.setItem('accessToken', accessToken);
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: login, password }),
+      });
+  
+      const text = await response.text();
+  
+      if (!response.ok) {
+        let errorMessage = 'Помилка при вході';
+        try {
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.message || errorMessage;
+        } catch {}
+        throw new Error(errorMessage);
+      }
+  
+      const data = JSON.parse(text);
+  
+      const { token, user } = data;
+      const role = user?.empl_role;
+  
+      if (!token || !role) {
+        throw new Error('Не отримано токен або роль від сервера');
+      }
+  
+      localStorage.setItem('accessToken', token);
       localStorage.setItem('role', role);
+  
       if (role === 'manager') {
-        navigate('/manager/dashboard');
+        navigate('/manager');
       } else if (role === 'cashier') {
         navigate('/cashier/sell');
+      } else {
+        navigate('/');
       }
     } catch (err) {
       setError(err.message);
@@ -49,12 +64,16 @@ const LoginPage = () => {
   };
 
   return (
-    <div className={`min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 transition-opacity duration-1000 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-      <div className="absolute inset-0 overflow-hidden">
+    <div
+      className={`min-h-screen w-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 transition-opacity duration-1000 ${
+        mounted ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
+      <div className="fixed inset-0 overflow-hidden -z-10">
         <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,rgba(120,119,198,0.1)_0%,rgba(120,119,198,0)_50%)] animate-[spin_60s_linear_infinite]"></div>
       </div>
-      
-      <div className="w-full max-w-md relative">
+
+      <div className="w-full max-w-md relative z-10">
         {/* Logo Section */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent drop-shadow-sm">
@@ -141,8 +160,6 @@ const LoginPage = () => {
                   )}
                 </div>
               </button>
-              
-              
             </div>
           </form>
         </div>

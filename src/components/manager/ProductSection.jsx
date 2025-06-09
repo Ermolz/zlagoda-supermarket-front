@@ -7,9 +7,10 @@ const ProductSection = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('list'); // list, add, edit
   // UC16: Сортування товарів за назвою
-  const [sortField, setSortField] = useState('name');
+  const [sortField, setSortField] = useState('product_name');
   // UC17: Фільтрація за категорією
   const [filterCategory, setFilterCategory] = useState('all');
   // UC18: Фільтрація за наявністю
@@ -21,11 +22,9 @@ const ProductSection = () => {
   const [formData, setFormData] = useState({
     id_product: '',
     category_number: '',
-    name: '',
-    characteristics: '',
-    price: '',
-    amount: '',
-    promotional_product: false
+    product_name: '',
+    producer: '',
+    characteristics: ''
   });
 
   // Fetch categories for product form
@@ -50,19 +49,37 @@ const ProductSection = () => {
 
   const fetchProducts = async () => {
     setLoading(true);
+    setError('');
+  
     try {
-      const response = await fetch('/api/products?' + new URLSearchParams({
-        sort: sortField,
-        category: filterCategory !== 'all' ? filterCategory : '',
-        inStock: filterInStock !== 'all' ? filterInStock : ''
-      }));
-      
-      if (!response.ok) throw new Error('Failed to fetch products');
-      
-      const data = await response.json();
+      const params = new URLSearchParams();
+      if (sortField) params.append('sort', sortField);
+      if (filterCategory !== 'all') params.append('category', filterCategory);
+      if (filterInStock !== 'all') params.append('inStock', filterInStock);
+      if (searchQuery.trim()) params.append('search', searchQuery.trim());
+  
+      const response = await fetch(`http://localhost:3000/api/manager/products?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      });
+  
+      const text = await response.text();
+  
+      if (!response.ok) {
+        let errorMessage = 'Не вдалося отримати список товарів';
+        try {
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.message || errorMessage;
+        } catch {}
+        throw new Error(errorMessage);
+      }
+  
+      const data = JSON.parse(text);
       setProducts(data);
-    } catch (error) {
-      console.error('Error fetching products:', error);
+    } catch (err) {
+      console.error('Помилка при отриманні товарів:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -119,17 +136,22 @@ const ProductSection = () => {
     setFormData({
       id_product: '',
       category_number: '',
-      name: '',
-      characteristics: '',
-      price: '',
-      amount: '',
-      promotional_product: false
+      product_name: '',
+      producer: '',
+      characteristics: ''
     });
     setSelectedProduct(null);
   };
 
   const handleEdit = (product) => {
-    setFormData(product);
+    // Витягуємо тільки потрібні поля для редагування
+    setFormData({
+      id_product: product.id_product,
+      category_number: product.category_number,
+      product_name: product.product_name,
+      producer: product.producer,
+      characteristics: product.characteristics
+    });
     setSelectedProduct(product);
     setActiveTab('edit');
   };
@@ -145,17 +167,25 @@ const ProductSection = () => {
   // Фільтрація товарів за пошуком
   const filteredProducts = products.filter(product => {
     if (searchQuery) {
-      return product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             product.characteristics.toLowerCase().includes(searchQuery.toLowerCase());
+      return product.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             product.characteristics.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             product.producer.toLowerCase().includes(searchQuery.toLowerCase());
     }
     return true;
   });
 
   return (
     <div className="p-6">
+      {/* Error display */}
+      {error && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+
       {/* Tabs for UC13 (додавання) and list view */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-gray-200">
+        <nav className="mb-3 flex space-x-8">
           <button
             onClick={() => {
               setActiveTab('list');
@@ -188,7 +218,7 @@ const ProductSection = () => {
       {activeTab === 'list' ? (
         <>
           {/* Filters for UC16 (сортування), UC17 (категорії), UC18 (наявність) */}
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-4">
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-4 mt-3">
             <div>
               <label htmlFor="sort" className="block text-sm font-medium text-gray-700">
                 {t('common.filters.sortBy')}
@@ -199,9 +229,9 @@ const ProductSection = () => {
                 onChange={(e) => setSortField(e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               >
-                <option value="name">{t('products.table.name')}</option>
-                <option value="price">{t('products.table.price')}</option>
-                <option value="amount">{t('products.table.quantity')}</option>
+                <option value="product_name">{t('products.table.name')}</option>
+                <option value="producer">{t('products.table.producer')}</option>
+                <option value="category_name">{t('products.table.category')}</option>
               </select>
             </div>
             <div>
@@ -252,92 +282,89 @@ const ProductSection = () => {
             </div>
           </div>
 
+          {/* Loading indicator */}
+          {loading && (
+            <div className="text-center py-4">
+              <div className="text-gray-600">{t('common.messages.loading')}</div>
+            </div>
+          )}
+
           {/* Products Table */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('products.table.id')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('products.table.name')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('products.table.category')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('products.table.price')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('products.table.quantity')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('products.table.promotional')}
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('products.table.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredProducts.map((product) => (
-                  <tr key={product.id_product}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{product.id_product}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                      <div className="text-sm text-gray-500">{product.characteristics}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {categories.find(c => c.category_number === product.category_number)?.name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{product.price} {t('common.currency')}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{product.amount} {t('common.quantity')}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        product.promotional_product
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {product.promotional_product ? t('common.yes') : t('common.no')}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(product)}
-                        className="text-indigo-600 hover:text-indigo-900 mr-4"
-                      >
-                        {t('products.actions.edit')}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product.id_product)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        {t('products.actions.delete')}
-                      </button>
-                    </td>
+          {!loading && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('products.table.id')}
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('products.table.name')}
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('products.table.producer')}
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('products.table.category')}
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('products.table.actions')}
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredProducts.map((product) => (
+                    <tr key={product.id_product}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{product.id_product}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-gray-900">{product.product_name}</div>
+                        <div className="text-sm text-gray-500">{product.characteristics}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{product.producer}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{product.category_name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleEdit(product)}
+                          className="text-indigo-600 hover:text-indigo-900 mr-4"
+                        >
+                          {t('products.actions.edit')}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.id_product)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          {t('products.actions.delete')}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
       ) : (
         // Form for UC13 (add) and UC14 (edit)
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-3">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Header */}
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                {activeTab === 'edit' ? t('Редагування інформації про продукт') : t('Додавання нового продукту')}
+              </h3>
+            </div>
+
+            {/* ID - only if not editing */}
             {!selectedProduct && (
-              <div>
-                <label htmlFor="id_product" className="block text-sm font-medium text-gray-700">
-                  {t('products.form.labels.id')}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <label htmlFor="id_product" className="block text-sm font-medium text-gray-700 mb-2">
+                  {t('products.form.labels.id')} *
                 </label>
                 <input
                   type="text"
@@ -346,138 +373,117 @@ const ProductSection = () => {
                   required
                   value={formData.id_product}
                   onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="Введіть ID продукту"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 />
               </div>
             )}
 
+            {/* Basic information */}
             <div>
-              <label htmlFor="category_number" className="block text-sm font-medium text-gray-700">
-                {t('products.form.labels.category')}
-              </label>
-              <select
-                name="category_number"
-                id="category_number"
-                required
-                value={formData.category_number}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              >
-                <option value="">{t('products.form.placeholders.selectCategory')}</option>
-                {categories.map(category => (
-                  <option key={category.category_number} value={category.category_number}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <h4 className="text-md font-medium text-gray-900 mb-4">Основна інформація</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="category_number" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('products.form.labels.category')} *
+                  </label>
+                  <select
+                    name="category_number"
+                    id="category_number"
+                    required
+                    value={formData.category_number}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  >
+                    <option value="">{t('products.form.placeholders.selectCategory')}</option>
+                    {categories.map((category) => (
+                      <option key={category.category_number} value={category.category_number}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                {t('products.form.labels.name')}
-              </label>
-              <input
-                type="text"
-                name="name"
-                id="name"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
+                <div>
+                  <label htmlFor="product_name" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('products.form.labels.name')} *
+                  </label>
+                  <input
+                    type="text"
+                    name="product_name"
+                    id="product_name"
+                    required
+                    value={formData.product_name}
+                    onChange={handleChange}
+                    placeholder="Назва продукту"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
 
-            <div className="sm:col-span-2">
-              <label htmlFor="characteristics" className="block text-sm font-medium text-gray-700">
-                {t('products.form.labels.characteristics')}
-              </label>
-              <textarea
-                name="characteristics"
-                id="characteristics"
-                rows={3}
-                required
-                value={formData.characteristics}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                {t('products.form.labels.price')}
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <input
-                  type="number"
-                  name="price"
-                  id="price"
-                  required
-                  min="0"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">{t('common.currency')}</span>
+                <div className="md:col-span-2">
+                  <label htmlFor="producer" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('products.form.labels.producer')} *
+                  </label>
+                  <input
+                    type="text"
+                    name="producer"
+                    id="producer"
+                    required
+                    value={formData.producer}
+                    onChange={handleChange}
+                    placeholder="Виробник"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
                 </div>
               </div>
             </div>
 
+            {/* Characteristics */}
             <div>
-              <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
-                {t('products.form.labels.quantity')}
-              </label>
-              <input
-                type="number"
-                name="amount"
-                id="amount"
-                required
-                min="0"
-                value={formData.amount}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
+              <h4 className="text-md font-medium text-gray-900 mb-4">Характеристики</h4>
+              <div>
+                <label htmlFor="characteristics" className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('products.form.labels.characteristics')} *
+                </label>
+                <textarea
+                  name="characteristics"
+                  id="characteristics"
+                  rows={4}
+                  required
+                  value={formData.characteristics}
+                  onChange={handleChange}
+                  placeholder="Опишіть характеристики"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+              </div>
             </div>
 
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="promotional_product"
-                id="promotional_product"
-                checked={formData.promotional_product}
-                onChange={handleChange}
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-              />
-              <label htmlFor="promotional_product" className="ml-2 block text-sm text-gray-900">
-                {t('products.form.labels.promotional')}
-              </label>
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('list');
+                  resetForm();
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                {t('products.actions.cancel')}
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                {loading ? t('common.messages.saving') : activeTab === 'edit' ? t('products.actions.save') : t('products.actions.add')}
+              </button>
             </div>
-          </div>
+          </form>
+        </div>
 
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('list');
-                resetForm();
-              }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              {t('products.actions.cancel')}
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              {loading ? t('common.messages.saving') : activeTab === 'edit' ? t('products.actions.save') : t('products.actions.add')}
-            </button>
-          </div>
-        </form>
       )}
     </div>
   );
 };
 
-export default ProductSection; 
+export default ProductSection;

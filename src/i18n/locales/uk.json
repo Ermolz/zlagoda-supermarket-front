@@ -165,6 +165,7 @@
     "table": {
       "id": "ID",
       "name": "Назва",
+      "producer": "Виробник",
       "category": "Категорія",
       "price": "Ціна",
       "quantity": "Кількість",
@@ -177,6 +178,7 @@
       "labels": {
         "id": "ID товару",
         "name": "Назва товару",
+        "producer":"Виробник",
         "category": "Категорія",
         "price": "Ціна",
         "quantity": "Кількість",

@@ -105,9 +105,9 @@ const ManagerPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6]">
-      <nav className="bg-white shadow-sm">
-        <div className="w-full px-4">
+    <div className="min-h-screen bg-[#F3F4F6] w-full">
+      <nav className="bg-white shadow-sm w-full">
+        <div className="max-w-none px-4 w-full">
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
@@ -128,8 +128,8 @@ const ManagerPage = () => {
         </div>
       </nav>
 
-      <div className="w-full p-0">
-        <div className="grid grid-cols-1 md:grid-cols-6">
+      <div className="w-full h-full">
+        <div className="grid grid-cols-1 md:grid-cols-6 min-h-[calc(100vh-4rem)]">
           {/* Navigation Sidebar */}
           <nav className="md:col-span-1 p-4 bg-[#F3F4F6]">
             {navigationItems.map((item) => (
@@ -152,7 +152,7 @@ const ManagerPage = () => {
           </nav>
 
           {/* Main Content Area */}
-          <main className="md:col-span-5 bg-[#F3F4F6] p-4">
+          <main className="md:col-span-5 bg-[#F3F4F6] p-4 w-full">
             {renderSection()}
           </main>
         </div>
@@ -161,4 +161,4 @@ const ManagerPage = () => {
   );
 };
 
-export default ManagerPage; 
+export default ManagerPage;
