@@ -9,7 +9,7 @@ const EmployeeSection = () => {
   const [error, setError] = useState(null);
   const [sortField, setSortField] = useState('name');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('list'); // list, add, edit
   const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
@@ -83,12 +83,14 @@ const EmployeeSection = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     const dataToSend = {
-      empl_surname: formData.surname,
-      empl_name: formData.name,
-      empl_patronymic: formData.patronymic,
-      empl_role: formData.role,
+      id_employee: formData.id_employee,
+      surname: formData.surname,
+      name: formData.name,
+      patronymic: formData.patronymic,
+      role: formData.role,
       salary: formData.salary,
       date_of_birth: formData.dateOfBirth,
       date_of_start: formData.dateOfStart,
@@ -97,36 +99,42 @@ const EmployeeSection = () => {
       street: formData.street,
       zip_code: formData.zip_code
     };
-    
-    if (selectedEmployee) {
-        dataToSend.id_employee = selectedEmployee.id_employee;
-    }
+
+    console.log(dataToSend)
 
     try {
-      const config = {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-      };
-      if (selectedEmployee) {
-        await axios.put(
-          `http://localhost:3000/api/manager/employees/${selectedEmployee.id_employee}`,
-          dataToSend,
-          config
-        );
-      } else {
-        await axios.post(
-            `http://localhost:3000/api/manager/employees`, 
-            dataToSend,
-            config
-        );
+      const response = await fetch('http://localhost:3000/api/manager/employees', {
+        method: activeTab === 'edit' ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+        body: JSON.stringify(dataToSend),
+      });
+
+      console.log(response);
+
+      if (!response.ok) {
+        const errorText = await response.text(); // спочатку як текст
+        console.error('Raw server response:', errorText);
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          console.error('Parsed server error:', errorData);
+        } catch (parseError) {
+          console.error('Could not parse error as JSON:', parseError);
+        }
+        
+        throw new Error(`Server returned ${response.status}: ${errorText}`);
       }
-      fetchEmployees();
-      setIsFormOpen(false);
-      setSelectedEmployee(null);
+
+      await fetchEmployees();
+      setActiveTab('list');
       resetForm();
-    } catch (err) {
-      console.error('Error saving employee:', err);
-      const errorMessage = err.response?.data?.message || t('employees.messages.error');
-      setError(errorMessage);
+    } catch (error) {
+      console.error('Error saving employee:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -160,7 +168,7 @@ const EmployeeSection = () => {
       street: employee.street,
       zip_code: employee.zip_code
     });
-    setIsFormOpen(true);
+    setActiveTab('edit');
   };
 
   const resetForm = () => {
@@ -179,156 +187,415 @@ const EmployeeSection = () => {
       zip_code: ''
     });
   };
-  
-    if (loading) {
-    return <div className="text-center py-4">{t('common.messages.loading')}</div>;
-  }
 
-  if (error) {
-    return <div className="text-center text-red-600 py-4">{error}</div>;
-  }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Фільтрація співробітників за пошуком
+  const filteredEmployees = employees.filter(employee => {
+    if (searchQuery) {
+      return employee.surname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             employee.phone_number.includes(searchQuery) ||
+             employee.id_employee.toString().includes(searchQuery);
+    }
+    return true;
+  });
 
   return (
-    <div className="space-y-6">
-      {/* Кнопка та форма залишаються без змін */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{t('employees.title')}</h2>
-        <button
-          onClick={() => {
-            setIsFormOpen(true);
-            setSelectedEmployee(null);
-            resetForm();
-          }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          {t('employees.form.add')}
-        </button>
+    <div className="p-6">
+      {/* Tabs for navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="mb-3 flex space-x-8">
+          <button
+            onClick={() => {
+              setActiveTab('list');
+              resetForm();
+              setSelectedEmployee(null);
+            }}
+            className={`${
+              activeTab === 'list'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            {t('employees.title')}
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('add');
+              resetForm();
+              setSelectedEmployee(null);
+            }}
+            className={`${
+              activeTab === 'add'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            {t('employees.form.add')}
+          </button>
+        </nav>
       </div>
 
-      {isFormOpen && (
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold mb-4">
-            {selectedEmployee ? t('employees.form.edit') : t('employees.form.add')}
-          </h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Surname */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t('employees.form.labels.surname')}</label>
-                <input type="text" value={formData.surname} onChange={(e) => setFormData({ ...formData, surname: e.target.value })} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"/>
+      {activeTab === 'list' ? (
+        <>
+          {/* Filters for sorting and searching */}
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 mt-3">
+            <div>
+              <label htmlFor="sort" className="block text-sm font-medium text-gray-700">
+                Сортування
+              </label>
+              <select
+                id="sort"
+                value={sortField}
+                onChange={(e) => setSortField(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
+              >
+                <option value="name">За ім'ям</option>
+                <option value="surname">За прізвищем</option>
+                <option value="role">За посадою</option>
+                <option value="salary">За зарплатою</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="search" className="block text-sm font-medium text-gray-700">
+                {t('common.filters.search')}
+              </label>
+              <input
+                type="text"
+                id="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Пошук за ім'ям, прізвищем, телефоном або ID"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
+              />
+            </div>
+          </div>
+
+          {/* Employee Table */}
+          <div className="bg-white shadow-sm rounded-lg overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.id')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.surname')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.name')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.patronymic')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.role')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.salary')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.dateOfBirth')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.dateOfStart')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.phone')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.city')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.street')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.zipCode')}</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.actions')}</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredEmployees.map((employee) => (
+                  <tr key={employee.id_employee}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.id_employee}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.surname}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.patronymic}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{t(`employees.form.roles.${employee.role}`)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.salary} {t('common.currency')}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.dateOfBirth}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.dateOfStart}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.phone_number}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.city}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.street}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.zip_code}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">
+                      <div className="flex justify-center space-x-3">
+                        <button onClick={() => handleEdit(employee)} className="text-indigo-600 hover:text-indigo-900">{t('employees.actions.edit')}</button>
+                        <button onClick={() => handleDelete(employee.id_employee)} className="text-red-600 hover:text-red-900">{t('employees.actions.delete')}</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : (
+        // Form for add and edit
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-3">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Header */}
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                {activeTab === 'edit' ? 'Редагування інформації про співробітника' : 'Додавання нового співробітника'}
+              </h3>
+            </div>
+
+            {/* ID тільки при додаванні */}
+            {!selectedEmployee && (
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <label htmlFor="id_employee" className="block text-sm font-medium text-gray-700 mb-2">
+                  Номер працівника *
+                </label>
+                <input
+                  type="text"
+                  name="id_employee"
+                  id="id_employee"
+                  required
+                  value={formData.id_employee}
+                  onChange={handleChange}
+                  placeholder="Введіть унікальний числовий ідентифікатор"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  Введіть унікальний числовий ідентифікатор працівника
+                </p>
               </div>
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t('employees.form.labels.name')}</label>
-                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"/>
-              </div>
-              {/* Patronymic */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t('employees.form.labels.patronymic')}</label>
-                <input type="text" value={formData.patronymic} onChange={(e) => setFormData({ ...formData, patronymic: e.target.value })} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"/>
-              </div>
-              {/* Role */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t('employees.form.labels.role')}</label>
-                <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                  <option value="cashier">{t('employees.form.roles.cashier')}</option>
-                  <option value="manager">{t('employees.form.roles.manager')}</option>
-                </select>
-              </div>
-              {/* Salary */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t('employees.form.labels.salary')}</label>
-                <input type="number" value={formData.salary} onChange={(e) => setFormData({ ...formData, salary: e.target.value })} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"/>
-              </div>
-              {/* Date of Birth */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t('employees.form.labels.dateOfBirth')}</label>
-                <input type="date" value={formData.dateOfBirth} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"/>
-              </div>
-              {/* Date of Start */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t('employees.form.labels.dateOfStart')}</label>
-                <input type="date" value={formData.dateOfStart} onChange={(e) => setFormData({ ...formData, dateOfStart: e.target.value })} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"/>
-              </div>
-              {/* Phone Number */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t('employees.form.labels.phone')}</label>
-                <input type="tel" value={formData.phone_number} onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"/>
-              </div>
-               {/* City */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t('employees.form.labels.city')}</label>
-                <input type="text" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"/>
-              </div>
-              {/* Street */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t('employees.form.labels.street')}</label>
-                <input type="text" value={formData.street} onChange={(e) => setFormData({ ...formData, street: e.target.value })} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"/>
-              </div>
-              {/* Zip Code */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">{t('employees.form.labels.zipCode')}</label>
-                <input type="text" value={formData.zip_code} onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"/>
+            )}
+
+            {/* Personal Information */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 mb-4">Особисті дані</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="surname" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('employees.form.labels.surname')} *
+                  </label>
+                  <input
+                    type="text"
+                    name="surname"
+                    id="surname"
+                    required
+                    value={formData.surname}
+                    onChange={handleChange}
+                    placeholder="Прізвище"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('employees.form.labels.name')} *
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    id="name"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Ім'я"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="patronymic" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('employees.form.labels.patronymic')}
+                  </label>
+                  <input
+                    type="text"
+                    name="patronymic"
+                    id="patronymic"
+                    value={formData.patronymic}
+                    onChange={handleChange}
+                    placeholder="По батькові"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
               </div>
             </div>
-            <div className="flex justify-end space-x-3">
-              <button type="button" onClick={() => { setIsFormOpen(false); setSelectedEmployee(null); resetForm(); }} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
-                {t('employees.actions.cancel')}
-              </button>
-              <button type="submit" className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                {t('employees.actions.save')}
-              </button>
+
+            {/* Work Information */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 mb-4">Робоча інформація</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('employees.form.labels.role')} *
+                  </label>
+                  <select
+                    name="role"
+                    id="role"
+                    required
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  >
+                    <option value="cashier">{t('employees.form.roles.cashier')}</option>
+                    <option value="manager">{t('employees.form.roles.manager')}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="salary" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('employees.form.labels.salary')} *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      name="salary"
+                      id="salary"
+                      required
+                      min="0"
+                      value={formData.salary}
+                      onChange={handleChange}
+                      placeholder="0"
+                      className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                    <span className="absolute right-3 top-2 text-gray-400 text-sm">грн</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('employees.form.labels.dateOfBirth')} *
+                  </label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    id="dateOfBirth"
+                    required
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="dateOfStart" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('employees.form.labels.dateOfStart')} *
+                  </label>
+                  <input
+                    type="date"
+                    name="dateOfStart"
+                    id="dateOfStart"
+                    required
+                    value={formData.dateOfStart}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Information */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 mb-4">Контактна інформація</h4>
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                <div>
+                  <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('employees.form.labels.phone')} *
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone_number"
+                    id="phone_number"
+                    required
+                    value={formData.phone_number}
+                    onChange={handleChange}
+                    placeholder="+380 XX XXX XXXX"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Address Information */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 mb-4">Адреса</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('employees.form.labels.city')} *
+                  </label>
+                  <input
+                    type="text"
+                    name="city"
+                    id="city"
+                    required
+                    value={formData.city}
+                    onChange={handleChange}
+                    placeholder="Місто"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('employees.form.labels.street')} *
+                  </label>
+                  <input
+                    type="text"
+                    name="street"
+                    id="street"
+                    required
+                    value={formData.street}
+                    onChange={handleChange}
+                    placeholder="Вулиця та номер будинку"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div className="md:col-span-1">
+                  <label htmlFor="zip_code" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('employees.form.labels.zipCode')} *
+                  </label>
+                  <input
+                    type="text"
+                    name="zip_code"
+                    id="zip_code"
+                    required
+                    value={formData.zip_code}
+                    onChange={handleChange}
+                    placeholder="Поштовий індекс"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="border-t border-gray-200 pt-6">
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('list');
+                    resetForm();
+                    setSelectedEmployee(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                >
+                  {t('employees.actions.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                >
+                  {loading ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      {t('common.messages.saving')}
+                    </span>
+                  ) : (
+                    activeTab === 'edit' ? t('employees.actions.save') : t('employees.actions.add')
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         </div>
       )}
-
-      {/* ===== ОНОВЛЕНА ТАБЛИЦЯ ===== */}
-      <div className="bg-white shadow-sm rounded-lg overflow-x-auto"> {/* Додано overflow-x-auto для мобільних пристроїв */}
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.id')}</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.surname')}</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.name')}</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.patronymic')}</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.role')}</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.salary')}</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.dateOfBirth')}</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.dateOfStart')}</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.phone')}</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.city')}</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.street')}</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.zipCode')}</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{t('employees.table.actions')}</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {employees.map((employee) => (
-              <tr key={employee.id_employee}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.id_employee}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.surname}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.patronymic}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{t(`employees.form.roles.${employee.role}`)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.salary} {t('common.currency')}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(employee.dateOfBirth).toLocaleDateString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(employee.dateOfStart).toLocaleDateString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.phone_number}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.city}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.street}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.zip_code}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <div className="flex space-x-2">
-                    <button onClick={() => handleEdit(employee)} className="text-blue-600 hover:text-blue-900">{t('employees.actions.edit')}</button>
-                    <button onClick={() => handleDelete(employee.id_employee)} className="text-red-600 hover:text-red-900">{t('employees.actions.delete')}</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 };

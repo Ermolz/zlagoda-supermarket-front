@@ -66,23 +66,47 @@ const CategorySection = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+
+    console.log("Відправка даних:", formData);
+    console.log("Поточний режим:", activeTab);
 
     try {
-      const response = await fetch('/api/categories', {
-        method: activeTab === 'edit' ? 'PUT' : 'POST',
+      let url = 'http://localhost:3000/api/manager/categories';
+      let method = 'POST';
+
+      if (activeTab === 'edit' && formData.category_number) {
+        url = `http://localhost:3000/api/manager/categories/${formData.category_number}`;
+        method = 'PUT';
+      }
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
         },
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) throw new Error('Failed to save category');
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = 'Не вдалося зберегти категорію';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
 
       await fetchCategories();
       setActiveTab('list');
       resetForm();
-    } catch (error) {
-      console.error('Error saving category:', error);
+    } catch (err) {
+      console.error('Помилка при збереженні категорії:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -94,8 +118,11 @@ const CategorySection = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/categories/${id}`, {
+      const response = await fetch(`http://localhost:3000/api/manager/categories/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
       });
 
       if (!response.ok) throw new Error('Failed to delete category');
@@ -191,7 +218,7 @@ const CategorySection = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Пошук за назвою або номером"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-s px-3 py-2"
               />
             </div>
           </div>
@@ -216,12 +243,12 @@ const CategorySection = () => {
                 {filteredCategories.map((category) => (
                   <tr key={category.category_number}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{category.category_number}</div>
+                      <div className="text-sm text-center text-gray-900">{category.category_number}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{category.category_name}</div>
+                      <div className="text-sm font-medium text-center text-gray-900">{category.category_name}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                       <button
                         onClick={() => handleEdit(category)}
                         className="text-indigo-600 hover:text-indigo-900 mr-4"
@@ -285,8 +312,8 @@ const CategorySection = () => {
                   </label>
                   <input
                     type="text"
-                    name="name"
-                    id="name"
+                    name="category_name"
+                    id="category_name"
                     required
                     value={formData.category_name}
                     onChange={handleChange}

@@ -30,13 +30,39 @@ const ProductSection = () => {
   // Fetch categories for product form
   useEffect(() => {
     const fetchCategories = async () => {
+      setLoading(true);
+      setError('');
+    
       try {
-        const response = await fetch('/api/categories');
-        if (!response.ok) throw new Error('Failed to fetch categories');
-        const data = await response.json();
+        const token = localStorage.getItem('accessToken');
+    
+        const response = await fetch('http://localhost:3000/api/manager/categories', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        const text = await response.text();
+    
+        if (!response.ok) {
+          let errorMessage = 'Не вдалося отримати список категорій';
+          try {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.message || errorMessage;
+          } catch (parseError) {
+            console.warn('Не вдалося розпарсити JSON помилки:', parseError);
+          }
+          throw new Error(errorMessage);
+        }
+    
+        const data = JSON.parse(text);
         setCategories(data);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
+      } catch (err) {
+        console.error('Помилка при отриманні категорій:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
     fetchCategories();
@@ -90,23 +116,52 @@ const ProductSection = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    // Додаємо очищення помилок, якщо у вас є стейт для них
+    // setError(''); 
+
+    console.log("Відправка даних:", formData);
+    console.log("Поточний режим:", activeTab);
 
     try {
-      const response = await fetch('/api/products', {
-        method: activeTab === 'edit' ? 'PUT' : 'POST',
+      let url = 'http://localhost:3000/api/manager/products';
+      let method = 'POST';
+
+      // *** Ось зміна: Визначаємо URL і метод для PUT/POST запиту ***
+      if (activeTab === 'edit' && formData.id_product) { // Припускаємо, що formData.product_id є унікальним ідентифікатором товару
+        // Для редагування, додаємо product_id до URL
+        url = `http://localhost:3000/api/manager/products/${formData.id_product}`;
+        method = 'PUT';
+      }
+
+      const response = await fetch(url, { // Використовуємо визначений 'url'
+        method: method, // Використовуємо визначений 'method' (POST або PUT)
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
         },
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) throw new Error('Failed to save product');
+      if (!response.ok) {
+        // Краще обробляти помилки, щоб отримати конкретне повідомлення з бекенду
+        const errorText = await response.text();
+        let errorMessage = 'Не вдалося зберегти товар';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage; // Якщо не JSON, використовуємо текст
+        }
+        throw new Error(errorMessage);
+      }
 
-      await fetchProducts();
-      setActiveTab('list');
-      resetForm();
+      await fetchProducts(); // Оновлюємо список товарів після успішного збереження
+      setActiveTab('list'); // Повертаємося до списку
+      resetForm(); // Очищаємо форму
     } catch (error) {
-      console.error('Error saving product:', error);
+      console.error('Помилка при збереженні товару:', error);
+      // Якщо у вас є стейт setError, встановіть його тут
+      // setError(error.message); 
     } finally {
       setLoading(false);
     }
@@ -118,15 +173,18 @@ const ProductSection = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/products/${id}`, {
+      const response = await fetch(`http://localhost:3000/api/manager/products/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
       });
 
-      if (!response.ok) throw new Error('Failed to delete product');
+      if (!response.ok) throw new Error('Failed to delete category');
 
       await fetchProducts();
     } catch (error) {
-      console.error('Error deleting product:', error);
+      console.error('Error deleting category:', error);
     } finally {
       setLoading(false);
     }
@@ -227,7 +285,7 @@ const ProductSection = () => {
                 id="sort"
                 value={sortField}
                 onChange={(e) => setSortField(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
               >
                 <option value="product_name">{t('products.table.name')}</option>
                 <option value="producer">{t('products.table.producer')}</option>
@@ -242,12 +300,12 @@ const ProductSection = () => {
                 id="category"
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
               >
                 <option value="all">{t('common.filters.all')}</option>
                 {categories.map(category => (
-                  <option key={category.category_number} value={category.category_number}>
-                    {category.name}
+                  <option key={category.category_name} value={category.category_name}>
+                    {category.category_name}
                   </option>
                 ))}
               </select>
@@ -260,7 +318,7 @@ const ProductSection = () => {
                 id="inStock"
                 value={filterInStock}
                 onChange={(e) => setFilterInStock(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
               >
                 <option value="all">{t('common.filters.all')}</option>
                 <option value="true">{t('products.filters.available')}</option>
@@ -277,7 +335,7 @@ const ProductSection = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('products.filters.searchPlaceholder')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
               />
             </div>
           </div>
@@ -328,7 +386,7 @@ const ProductSection = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{product.category_name}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                         <button
                           onClick={() => handleEdit(product)}
                           className="text-indigo-600 hover:text-indigo-900 mr-4"
@@ -398,7 +456,7 @@ const ProductSection = () => {
                     <option value="">{t('products.form.placeholders.selectCategory')}</option>
                     {categories.map((category) => (
                       <option key={category.category_number} value={category.category_number}>
-                        {category.name}
+                        {category.category_number}
                       </option>
                     ))}
                   </select>
@@ -440,11 +498,8 @@ const ProductSection = () => {
 
             {/* Characteristics */}
             <div>
-              <h4 className="text-md font-medium text-gray-900 mb-4">Характеристики</h4>
+              <h4 className="text-md font-medium text-gray-900 mb-4">Характеристики*</h4>
               <div>
-                <label htmlFor="characteristics" className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('products.form.labels.characteristics')} *
-                </label>
                 <textarea
                   name="characteristics"
                   id="characteristics"

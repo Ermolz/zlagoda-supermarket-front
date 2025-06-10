@@ -77,6 +77,8 @@ const CustomerSection = () => {
     setLoading(true);
 
     const token = localStorage.getItem('accessToken');
+
+    console.log('formData:', formData);
   
     try {
       const response = await fetch('http://localhost:3000/api/manager/customer-cards', {
@@ -217,7 +219,7 @@ const CustomerSection = () => {
                 id="sort"
                 value={sortField}
                 onChange={(e) => setSortField(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
               >
                 <option value="surname">За прізвищем</option>
                 <option value="card_number">За номером карти</option>
@@ -232,7 +234,7 @@ const CustomerSection = () => {
                 id="discount"
                 value={filterDiscount}
                 onChange={(e) => setFilterDiscount(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
               >
                 {discountOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -251,7 +253,7 @@ const CustomerSection = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('customers.filters.searchPlaceholder')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
               />
             </div>
           </div>
@@ -366,10 +368,10 @@ const CustomerSection = () => {
                     </label>
                     <input
                       type="text"
-                      name="surname"
-                      id="surname"
+                      name="cust_surname"
+                      id="cust_surname"
                       required
-                      value={formData.surname}
+                      value={formData.cust_surname}
                       onChange={handleChange}
                       placeholder="Прізвище"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -382,10 +384,10 @@ const CustomerSection = () => {
                     </label>
                     <input
                       type="text"
-                      name="name"
-                      id="name"
+                      name="cust_name"
+                      id="cust_name"
                       required
-                      value={formData.name}
+                      value={formData.cust_name}
                       onChange={handleChange}
                       placeholder="Ім'я"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -398,10 +400,10 @@ const CustomerSection = () => {
                     </label>
                     <input
                       type="text"
-                      name="patronymic"
-                      id="patronymic"
+                      name="cust_patronymic"
+                      id="cust_patronymic"
                       required
-                      value={formData.patronymic}
+                      value={formData.cust_patronymic}
                       onChange={handleChange}
                       placeholder="По батькові"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
