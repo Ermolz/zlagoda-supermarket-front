@@ -43,7 +43,7 @@ const CustomerSection = () => {
       if (filterDiscount !== 'all') params.append('percent', filterDiscount);
       if (searchQuery.trim()) params.append('search', searchQuery.trim());
   
-      const response = await fetch(`http://localhost:3000/api/manager/customer-cards`, {
+      const response = await fetch(`http://localhost:3000/api/cashier/customers`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
         },
@@ -105,71 +105,21 @@ const CustomerSection = () => {
 
   // UC3: Видалення даних про клієнтів
   const handleDelete = async (id) => {
-    console.log('🔍 Спроба видалення клієнта з ID:', id);
-    console.log('🔍 Тип ID:', typeof id);
-    
-    if (window.confirm(t('customer.messages.deleteConfirm'))) {
-      setLoading(true);
-      setError(''); // Очищаємо попередні помилки
-      
-      try {
-        const token = localStorage.getItem('accessToken');
-        console.log('🔍 Токен авторизації:', token ? 'Присутній' : 'Відсутній');
-        
-        const url = `http://localhost:3000/api/manager/customer-cards/${id}`;
-        console.log('🔍 URL запиту:', url);
-        
-        const response = await fetch(url, {
-          method: 'DELETE',
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-  
-        console.log('🔍 Статус відповіді:', response.status);
-        console.log('🔍 Статус текст:', response.statusText);
-  
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.log('🔍 Текст помилки від сервера:', errorText);
-          
-          let errorMessage = 'Не вдалося видалити клієнта';
-          let serverError = null;
-          
-          try {
-            serverError = JSON.parse(errorText);
-            errorMessage = serverError.message || serverError.error || errorMessage;
-            console.log('🔍 Розпарсена помилка:', serverError);
-          } catch (parseError) {
-            console.log('🔍 Не вдалося розпарсити помилку як JSON:', parseError);
-          }
-          
-          // Показуємо детальну інформацію про помилку
-          if (response.status === 400) {
-            errorMessage = `Помилка запиту: ${errorMessage}. Можливо, неправильний формат номера карти або клієнта не існує.`;
-          } else if (response.status === 401) {
-            errorMessage = 'Помилка авторизації. Будь ласка, увійдіть в систему знову.';
-          } else if (response.status === 403) {
-            errorMessage = 'Недостатньо прав для видалення клієнта.';
-          } else if (response.status === 404) {
-            errorMessage = 'Клієнта з таким номером карти не знайдено.';
-          }
-          
-          throw new Error(errorMessage);
-        }
-  
-        console.log('✅ Клієнт успішно видалений');
-        
-        // Успішне видалення - оновлюємо список
-        await fetchCustomers();
-        
-      } catch (err) {
-        console.error('❌ Помилка при видаленні клієнта:', err);
-        setError(err.message || 'Невідома помилка при видаленні клієнта');
-      } finally {
-        setLoading(false);
-      }
+    if (!window.confirm('Ви впевнені, що хочете видалити цього клієнта?')) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/customers/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete customer');
+
+      await fetchCustomers();
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -240,19 +190,6 @@ const CustomerSection = () => {
             } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             {t('customers.title')}
-          </button>
-          <button
-            onClick={() => {
-              setActiveTab('add');
-              resetForm();
-            }}
-            className={`${
-              activeTab === 'add'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-          >
-            {t('customers.form.add')}
           </button>
         </nav>
       </div>
