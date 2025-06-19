@@ -28,45 +28,45 @@ const StoreProductSection = () => {
   });
 
   // Fetch categories for product form
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setLoading(true);
-      setError('');
+  // useEffect(() => {
+  //   const fetchCategories = async () => {
+  //     setLoading(true);
+  //     setError('');
     
-      try {
-        const token = localStorage.getItem('accessToken');
+  //     try {
+  //       const token = localStorage.getItem('accessToken');
     
-        const response = await fetch('http://localhost:3000/api/manager/categories', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+  //       const response = await fetch('http://localhost:3000/api/cashier/categories', {
+  //         headers: {
+  //           'Authorization': `Bearer ${token}`,
+  //           'Content-Type': 'application/json',
+  //         },
+  //       });
         
-        const text = await response.text();
+  //       const text = await response.text();
     
-        if (!response.ok) {
-          let errorMessage = 'Не вдалося отримати список категорій';
-          try {
-            const errorData = JSON.parse(text);
-            errorMessage = errorData.message || errorMessage;
-          } catch (parseError) {
-            console.warn('Не вдалося розпарсити JSON помилки:', parseError);
-          }
-          throw new Error(errorMessage);
-        }
+  //       if (!response.ok) {
+  //         let errorMessage = 'Не вдалося отримати список категорій';
+  //         try {
+  //           const errorData = JSON.parse(text);
+  //           errorMessage = errorData.message || errorMessage;
+  //         } catch (parseError) {
+  //           console.warn('Не вдалося розпарсити JSON помилки:', parseError);
+  //         }
+  //         throw new Error(errorMessage);
+  //       }
     
-        const data = JSON.parse(text);
-        setCategories(data);
-      } catch (err) {
-        console.error('Помилка при отриманні категорій:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCategories();
-  }, []);
+  //       const data = JSON.parse(text);
+  //       setCategories(data);
+  //     } catch (err) {
+  //       console.error('Помилка при отриманні категорій:', err);
+  //       setError(err.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchCategories();
+  // }, []);
 
   // UC16, UC17, UC18: Fetch products with sorting and filtering
   useEffect(() => {

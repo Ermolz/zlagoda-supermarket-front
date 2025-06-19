@@ -5,6 +5,8 @@ const ReportSection = () => {
   const [loading, setLoading] = useState(false);
   const [activeReport, setActiveReport] = useState('cashierChecksToday'); // cashierChecksToday, cashierChecksPeriod, checkDetails, promotionalProducts
   const [reportData, setReportData] = useState([]);
+  const [upcInput, setUpcInput] = useState('');
+
   
   // Стан для фільтрів
   const [dateRange, setDateRange] = useState({
@@ -22,7 +24,7 @@ const ReportSection = () => {
    * @returns {Object} Об'єкт із заголовками 'Authorization' та 'Content-Type'.
    */
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('accessToken');
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
@@ -34,7 +36,7 @@ const ReportSection = () => {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/cashier/checks/today`, {
-        headers: getAuthHeaders() // Використання авторизації
+        headers: getAuthHeaders()
       });
       if (!response.ok) throw new Error('Не вдалося отримати чеки за сьогодні');
       const data = await response.json();
@@ -50,36 +52,50 @@ const ReportSection = () => {
   // 10. Переглянути список усіх чеків, що створив касир за певний період часу
   const fetchCashierChecksByPeriod = async () => {
     setLoading(true);
+  
     try {
-      const response = await fetch(`${API_BASE_URL}/api/cashier/checks?` + new URLSearchParams({
-        start_date: dateRange.startDate,
-        end_date: dateRange.endDate
-      }), {
+      // Переконайся, що дати — рядки у форматі YYYY-MM-DD
+      const startDateStr = typeof dateRange.startDate === 'string'
+        ? dateRange.startDate
+        : dateRange.startDate?.toISOString().slice(0, 10);
+  
+      const endDateStr = typeof dateRange.endDate === 'string'
+        ? dateRange.endDate
+        : dateRange.endDate?.toISOString().slice(0, 10);
+  
+      if (!startDateStr || !endDateStr) {
+        throw new Error('Некоректні дати');
+      }
+  
+      const params = new URLSearchParams({
+        startDate: startDateStr,
+        endDate: endDateStr
+      });
+  
+      const response = await fetch(`${API_BASE_URL}/api/cashier/checks?${params.toString()}`, {
         headers: getAuthHeaders()
       });
-
-      // Спеціальна обробка для 401 Unauthorized
+  
       if (response.status === 401) {
         console.error("Помилка авторизації! Перенаправлення на сторінку входу...");
-        // Тут можна додати логіку для очищення localStorage і перенаправлення
-        // наприклад: window.location.href = '/login';
         throw new Error('Сесія закінчилася або ви не авторизовані.');
       }
-
+  
       if (!response.ok) {
         throw new Error('Не вдалося отримати чеки за період');
       }
-      
+  
       const data = await response.json();
       setReportData(data);
     } catch (error) {
       console.error('Помилка при отриманні чеків за період:', error);
-      alert(error.message); // Показуємо користувачу більш конкретну помилку
+      alert(error.message);
       setReportData([]);
     } finally {
       setLoading(false);
     }
   };
+  
 
   // 11. За номером чеку вивести усю інформацію про даний чек
   const fetchCheckDetailsByNumber = async () => {
@@ -113,7 +129,7 @@ const ReportSection = () => {
   const fetchPromotionalProducts = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/products/promotional`, {
+      const response = await fetch(`${API_BASE_URL}/api/cashier/store-products/promotional`, {
         headers: getAuthHeaders() // Використання авторизації
       });
       if (!response.ok) throw new Error('Не вдалося отримати акційні товари');
@@ -121,6 +137,40 @@ const ReportSection = () => {
       setReportData(data);
     } catch (error) {
       console.error('Помилка при отриманні акційних товарів:', error);
+      setReportData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchNonPromotionalProducts = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/cashier/store-products/non-promotional`, {
+        headers: getAuthHeaders() // Використання авторизації
+      });
+      if (!response.ok) throw new Error('Не вдалося отримати акційні товари');
+      const data = await response.json();
+      setReportData(data);
+    } catch (error) {
+      console.error('Помилка при отриманні акційних товарів:', error);
+      setReportData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchProductsByUPC = async () => {
+    if (!upcInput) return alert('Будь ласка, введіть UPC-код товару.');
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/cashier/store-products/${upcInput}`, { headers: getAuthHeaders() });
+      if (!response.ok) throw new Error('Не вдалося знайти товар за UPC.');
+      const data = await response.json();
+      setReportData(Array.isArray(data) ? data : [data]);
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
       setReportData([]);
     } finally {
       setLoading(false);
@@ -153,6 +203,10 @@ const ReportSection = () => {
       case 'promotionalProducts':
         await fetchPromotionalProducts();
         break;
+      case 'NonPromotionalProducts':
+        await fetchNonPromotionalProducts();
+      case 'UPCsearch':
+        await fetchProductsByUPC();
       default:
         break;
     }
@@ -163,6 +217,7 @@ const ReportSection = () => {
     setReportData([]);
     setDateRange({ startDate: '', endDate: '' });
     setCheckNumberInput('');
+    setUpcInput('');
   }, [activeReport]);
 
   // Рендер фільтрів залежно від обраного звіту
@@ -192,6 +247,23 @@ const ReportSection = () => {
             />
           </div>
         );
+        case 'UPCsearch':
+          return (
+            <div className="mb-4">
+              <label htmlFor="upcInput" className="block text-sm font-medium text-gray-700">
+                UPC товару
+              </label>
+              <input
+                type="text"
+                id="upcInput"
+                value={upcInput}
+                onChange={(e) => setUpcInput(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="Введіть UPC товару"
+                required
+              />
+            </div>
+          );
       default:
         return null;
     }
@@ -244,108 +316,181 @@ const ReportSection = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Номер чеку</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Касир</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Загальна сума</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ПДВ</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Номер чеку</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Касир</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Загальна сума</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ПДВ</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {reportData.map((check) => (
                 <tr key={check.check_number}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{check.check_number}</td>
-                  <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium text-gray-900">{check.cashier_surname || 'N/A'} {check.cashier_name || ''}</div></td>
+                  <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm font-medium text-gray-900">{check.id_employee}</div></td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(check.print_date).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{check.sum_total} грн</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{check.vat} грн</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(parseFloat(check.sum_total)).toFixed(2)} грн</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(parseFloat(check.vat)).toFixed(2)} грн</td>
                 </tr>
               ))}
             </tbody>
           </table>
         );
-      
-      case 'checkDetails': {
-        const check = reportData[0];
-        return (
-          <div>
-            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-2">Деталі чеку</h3>
-            <div className="bg-gray-50 shadow overflow-hidden sm:rounded-lg mb-4">
-              <div className="px-4 py-5 sm:px-6">
-                <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
-                  <div className="sm:col-span-1">
-                    <dt className="text-sm font-medium text-gray-500">Номер чеку</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{check.check_number}</dd>
+        case 'checkDetails': {
+          const check = reportData[0];
+          return (
+            <div>
+              <h3 className="text-lg font-medium leading-6 text-gray-900 mb-2">Деталі чеку</h3>
+              <div className="bg-gray-50 shadow overflow-hidden sm:rounded-lg mb-4">
+                <div className="px-4 py-5 sm:px-6">
+                  <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                    <div className="sm:col-span-1">
+                      <dt className="text-sm font-medium text-gray-500">Номер чеку</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{check.check_number}</dd>
+                    </div>
+                    <div className="sm:col-span-1">
+                      <dt className="text-sm font-medium text-gray-500">Дата</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{new Date(check.print_date).toLocaleString()}</dd>
+                    </div>
+                    <div className="sm:col-span-1">
+                      <dt className="text-sm font-medium text-gray-500">Загальна сума</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{(parseFloat(check.sum_total)).toFixed(2)} грн</dd>
+                    </div>
+                    <div className="sm:col-span-1">
+                      <dt className="text-sm font-medium text-gray-500">ПДВ</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{(parseFloat(check.vat)).toFixed(2)} грн</dd>
+                    </div>
+                    <div className="sm:col-span-1">
+                      <dt className="text-sm font-medium text-gray-500">Касир</dt>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        {check.cashier?.surname} {check.cashier?.name} (ID: {check.cashier?.id_employee})
+                      </dd>
+                    </div>
+                    <div className="sm:col-span-1">
+                      <dt className="text-sm font-medium text-gray-500">Покупець</dt>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        {check.customer ? (
+                          <>
+                            {check.customer.surname} {check.customer.name} (Картка: {check.customer.card_number})
+                          </>
+                        ) : (
+                          '-'
+                        )}
+                    </dd>
                   </div>
-                  <div className="sm:col-span-1">
-                    <dt className="text-sm font-medium text-gray-500">Касир</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{check.cashier_surname || 'N/A'}</dd>
-                  </div>
-                  <div className="sm:col-span-1">
-                    <dt className="text-sm font-medium text-gray-500">Дата</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{new Date(check.print_date).toLocaleString()}</dd>
-                  </div>
-                  <div className="sm:col-span-1">
-                    <dt className="text-sm font-medium text-gray-500">Загальна сума</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{check.sum_total} грн</dd>
-                  </div>
-                  <div className="sm:col-span-1">
-                    <dt className="text-sm font-medium text-gray-500">ПДВ</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{check.vat} грн</dd>
-                  </div>
-                </dl>
+                  </dl>
+                </div>
               </div>
-            </div>
-
-            <h4 className="text-md font-medium leading-6 text-gray-900 mb-2 mt-6">Придбані товари</h4>
-            {check.items && check.items.length > 0 ? (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Назва товару</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ціна за одиницю</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Загальна вартість</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {check.items.map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.product_name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.quantity}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.price} грн</td>
-                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(item.quantity * item.price).toFixed(2)} грн</td>
+        
+              <h4 className="text-md font-medium leading-6 text-gray-900 mb-2 mt-6">Придбані товари</h4>
+              {check.sales && check.sales.length > 0 ? (
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Назва товару</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Характеристики</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ціна за одиницю</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Загальна вартість</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className="text-center py-4 text-gray-500">У цьому чеку немає товарів</div>
-            )}
-          </div>
-        );
-      }
-      case 'promotionalProducts':
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {check.sales.map((item, index) => (
+                      <tr key={index}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.product_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.characteristics}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.product_number}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(parseFloat(item.selling_price)).toFixed(2)} грн</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {(item.product_number * parseFloat(item.selling_price)).toFixed(2)} грн
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="text-center py-4 text-gray-500">У цьому чеку немає товарів</div>
+              )}
+            </div>
+          );
+        }        
+        case 'promotionalProducts':
           return (
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UPC</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Назва товару</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Акційна ціна</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">UPC</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">UPC (акційний)</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Назва товару</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Виробник</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість на складі</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ціна</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {reportData.map((product) => (
-                  <tr key={product.upc || product.id_product}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.upc}</td>
+                  <tr key={product.UPC || product.id_product}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.UPC}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.UPC_prom}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.product_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.producer}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.product_number}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.selling_price} грн</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           );
+          case 'NonPromotionalProducts':
+            return (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">UPC</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Назва товару</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Виробник</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість на складі</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ціна</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {reportData.map((product) => (
+                    <tr key={product.UPC || product.id_product}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.UPC}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.product_name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.producer}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.product_number}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.selling_price} грн</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            );
+            case 'UPCsearch':
+              return (
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">UPC</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Назва товару</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Виробник</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість на складі</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ціна</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {reportData.map((product) => (
+                      <tr key={product.UPC || product.id_product}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.UPC}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.product_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.producer}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.product_number}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(parseFloat(product.selling_price)).toFixed(2)} грн</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              );                          
       default:
         return null;
     }
@@ -371,6 +516,8 @@ const ReportSection = () => {
               <option value="cashierChecksPeriod">Чеки касира за період</option>
               <option value="checkDetails">Деталізація чеку за номером</option>
               <option value="promotionalProducts">Акційні товари</option>
+              <option value="NonPromotionalProducts">Не акційні товари</option>
+              <option value="UPCsearch">Пошук за UPC</option>
             </select>
           </div>
         </div>

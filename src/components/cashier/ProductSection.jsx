@@ -28,50 +28,65 @@ const ProductSection = () => {
   });
 
   // Fetch categories for product form
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setLoading(true);
-      setError('');
+  // useEffect(() => {
+  //   const fetchCategories = async () => {
+  //     setLoading(true);
+  //     setError('');
     
-      try {
-        const token = localStorage.getItem('accessToken');
+  //     try {
+  //       const token = localStorage.getItem('accessToken');
     
-        const response = await fetch('http://localhost:3000/api/manager/categories', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+  //       const response = await fetch('http://localhost:3000/api/cashier/categories', {
+  //         headers: {
+  //           'Authorization': `Bearer ${token}`,
+  //           'Content-Type': 'application/json',
+  //         },
+  //       });
         
-        const text = await response.text();
+  //       const text = await response.text();
     
-        if (!response.ok) {
-          let errorMessage = 'Не вдалося отримати список категорій';
-          try {
-            const errorData = JSON.parse(text);
-            errorMessage = errorData.message || errorMessage;
-          } catch (parseError) {
-            console.warn('Не вдалося розпарсити JSON помилки:', parseError);
-          }
-          throw new Error(errorMessage);
-        }
+  //       if (!response.ok) {
+  //         let errorMessage = 'Не вдалося отримати список категорій';
+  //         try {
+  //           const errorData = JSON.parse(text);
+  //           errorMessage = errorData.message || errorMessage;
+  //         } catch (parseError) {
+  //           console.warn('Не вдалося розпарсити JSON помилки:', parseError);
+  //         }
+  //         throw new Error(errorMessage);
+  //       }
     
-        const data = JSON.parse(text);
-        setCategories(data);
-      } catch (err) {
-        console.error('Помилка при отриманні категорій:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCategories();
-  }, []);
+  //       const data = JSON.parse(text);
+  //       setCategories(data);
+  //     } catch (err) {
+  //       console.error('Помилка при отриманні категорій:', err);
+  //       setError(err.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchCategories();
+  // }, []);
 
-  // UC16, UC17, UC18: Fetch products with sorting and filtering
+  // UC16, UC17, UC18: Fetch products with sorting and filtering (without search)
   useEffect(() => {
-    fetchProducts();
+    if (!searchQuery.trim()) {
+      fetchProducts();
+    }
   }, [sortField, filterCategory, filterInStock]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim()) {
+        performSearch();
+      } else {
+        fetchProducts();
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -82,7 +97,6 @@ const ProductSection = () => {
       if (sortField) params.append('sort', sortField);
       if (filterCategory !== 'all') params.append('category', filterCategory);
       if (filterInStock !== 'all') params.append('inStock', filterInStock);
-      if (searchQuery.trim()) params.append('search', searchQuery.trim());
   
       const response = await fetch(`http://localhost:3000/api/cashier/products?${params}`, {
         headers: {
@@ -111,13 +125,50 @@ const ProductSection = () => {
     }
   };
 
+  // New search function using backend endpoint
+  const performSearch = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const params = new URLSearchParams();
+      params.append('name', searchQuery.trim());
+      if (sortField) params.append('sort', sortField);
+      if (filterCategory !== 'all') params.append('category', filterCategory);
+      if (filterInStock !== 'all') params.append('inStock', filterInStock);
+
+      const response = await fetch(`http://localhost:3000/api/cashier/products/search?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      });
+
+      const text = await response.text();
+
+      if (!response.ok) {
+        let errorMessage = 'Не вдалося виконати пошук товарів';
+        try {
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.message || errorMessage;
+        } catch {}
+        throw new Error(errorMessage);
+      }
+
+      const data = JSON.parse(text);
+      setProducts(data);
+    } catch (err) {
+      console.error('Помилка при пошуку товарів:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // UC13: Додавання нових товарів
   // UC14: Редагування даних про товари
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Додаємо очищення помилок, якщо у вас є стейт для них
-    // setError(''); 
 
     console.log("Відправка даних:", formData);
     console.log("Поточний режим:", activeTab);
@@ -126,15 +177,13 @@ const ProductSection = () => {
       let url = 'http://localhost:3000/api/manager/products';
       let method = 'POST';
 
-      // *** Ось зміна: Визначаємо URL і метод для PUT/POST запиту ***
-      if (activeTab === 'edit' && formData.id_product) { // Припускаємо, що formData.product_id є унікальним ідентифікатором товару
-        // Для редагування, додаємо product_id до URL
+      if (activeTab === 'edit' && formData.id_product) {
         url = `http://localhost:3000/api/manager/products/${formData.id_product}`;
         method = 'PUT';
       }
 
-      const response = await fetch(url, { // Використовуємо визначений 'url'
-        method: method, // Використовуємо визначений 'method' (POST або PUT)
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
@@ -143,25 +192,28 @@ const ProductSection = () => {
       });
 
       if (!response.ok) {
-        // Краще обробляти помилки, щоб отримати конкретне повідомлення з бекенду
         const errorText = await response.text();
         let errorMessage = 'Не вдалося зберегти товар';
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.message || errorMessage;
         } catch {
-          errorMessage = errorText || errorMessage; // Якщо не JSON, використовуємо текст
+          errorMessage = errorText || errorMessage;
         }
         throw new Error(errorMessage);
       }
 
-      await fetchProducts(); // Оновлюємо список товарів після успішного збереження
-      setActiveTab('list'); // Повертаємося до списку
-      resetForm(); // Очищаємо форму
+      // Refresh products after successful save
+      if (searchQuery.trim()) {
+        await performSearch();
+      } else {
+        await fetchProducts();
+      }
+      
+      setActiveTab('list');
+      resetForm();
     } catch (error) {
       console.error('Помилка при збереженні товару:', error);
-      // Якщо у вас є стейт setError, встановіть його тут
-      // setError(error.message); 
     } finally {
       setLoading(false);
     }
@@ -180,11 +232,16 @@ const ProductSection = () => {
         },
       });
 
-      if (!response.ok) throw new Error('Failed to delete category');
+      if (!response.ok) throw new Error('Failed to delete product');
 
-      await fetchProducts();
+      // Refresh products after deletion
+      if (searchQuery.trim()) {
+        await performSearch();
+      } else {
+        await fetchProducts();
+      }
     } catch (error) {
-      console.error('Error deleting category:', error);
+      console.error('Error deleting product:', error);
     } finally {
       setLoading(false);
     }
@@ -202,7 +259,6 @@ const ProductSection = () => {
   };
 
   const handleEdit = (product) => {
-    // Витягуємо тільки потрібні поля для редагування
     setFormData({
       id_product: product.id_product,
       category_number: product.category_number,
@@ -221,16 +277,6 @@ const ProductSection = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
   };
-
-  // Фільтрація товарів за пошуком
-  const filteredProducts = products.filter(product => {
-    if (searchQuery) {
-      return product.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             product.characteristics.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             product.producer.toLowerCase().includes(searchQuery.toLowerCase());
-    }
-    return true;
-  });
 
   return (
     <div className="p-6">
@@ -335,13 +381,10 @@ const ProductSection = () => {
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {t('products.table.category')}
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('products.table.actions')}
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredProducts.map((product) => (
+                  {products.map((product) => (
                     <tr key={product.id_product}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{product.id_product}</div>
@@ -355,20 +398,6 @@ const ProductSection = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{product.category_name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                        <button
-                          onClick={() => handleEdit(product)}
-                          className="text-indigo-600 hover:text-indigo-900 mr-4"
-                        >
-                          {t('products.actions.edit')}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id_product)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          {t('products.actions.delete')}
-                        </button>
                       </td>
                     </tr>
                   ))}

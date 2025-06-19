@@ -9,6 +9,7 @@ import ProductSection from '../components/manager/ProductSection';
 import CategorySection from '../components/manager/CategorySection';
 import ReportSection from '../components/manager/ReportSection';
 import CheckSection from '../components/manager/CheckSection';
+import PromptSection from '../components/manager/PromptSection';
 
 const ManagerPage = () => {
   const navigate = useNavigate();
@@ -77,6 +78,16 @@ const ManagerPage = () => {
         </svg>
       ),
     },
+    {
+      id: 'prompts',
+      title: t('Запити'),
+      description: t('manager.navigation.prompts.description'),
+      icon: (
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16M4 6v12M20 6v12"/>
+        </svg>
+      ),      
+    },
   ];
 
   const renderSection = () => {
@@ -93,6 +104,8 @@ const ManagerPage = () => {
         return <CheckSection />;
       case 'reports':
         return <ReportSection />;
+      case 'prompts':
+        return <PromptSection />;
       default:
         return null;
     }

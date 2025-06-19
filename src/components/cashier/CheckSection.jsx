@@ -114,11 +114,13 @@ const CheckSection = () => {
   // Generate check number
   useEffect(() => {
     const generateCheckNumber = () => {
-      const timestamp = Date.now().toString();
-      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-      const shortTimestamp = timestamp.slice(-4);
-      return `${shortTimestamp}${random}`;
+      const prefix = 'CHK';
+      const timestamp = Date.now().toString().slice(-5);
+      const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    
+      return `${prefix}${timestamp}${random}`;
     };
+    
 
     setCheckData(prev => ({
       ...prev,
@@ -231,7 +233,7 @@ const CheckSection = () => {
         setCartItems([]);
         setCheckData(prev => ({
           ...prev,
-          check_number: Date.now().toString().slice(-7) + Math.floor(Math.random() * 100).toString().padStart(2, '0'),
+          а: Date.now().toString().slice(-7) + Math.floor(Math.random() * 100).toString().padStart(2, '0'),
           card_number: '',
           print_date: new Date().toISOString(),
           sum_total: 0,

@@ -84,50 +84,73 @@ const EmployeeSection = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    const dataToSend = {
-      id_employee: formData.id_employee,
-      surname: formData.surname,
-      name: formData.name,
-      patronymic: formData.patronymic,
-      role: formData.role,
-      salary: formData.salary,
-      date_of_birth: formData.dateOfBirth,
-      date_of_start: formData.dateOfStart,
-      phone_number: formData.phone_number,
-      city: formData.city,
-      street: formData.street,
-      zip_code: formData.zip_code
-    };
-
-    console.log(dataToSend)
-
+  
+    const token = localStorage.getItem('accessToken');
+  
     try {
-      const response = await fetch('http://localhost:3000/api/manager/employees', {
-        method: activeTab === 'edit' ? 'PUT' : 'POST',
+      const isEdit = activeTab === 'edit';
+  
+      const url = isEdit
+        ? `http://localhost:3000/api/manager/employees/${formData.id_employee}`
+        : 'http://localhost:3000/api/manager/employees';
+  
+      const method = isEdit ? 'PUT' : 'POST';
+  
+      const {
+        id_employee,
+        empl_surname,
+        empl_name,
+        empl_patronymic,
+        empl_role,
+        salary,
+        dateOfBirth,
+        dateOfStart,
+        phone_number,
+        city,
+        street,
+        zip_code
+      } = formData;
+  
+      const bodyData = {
+        empl_surname,
+        empl_name,
+        empl_patronymic,
+        empl_role,
+        salary,
+        date_of_birth: dateOfBirth,
+        date_of_start: dateOfStart,
+        phone_number,
+        city,
+        street,
+        zip_code,
+      };
+  
+      // При створенні додаємо id_employee
+      if (!isEdit) {
+        bodyData.id_employee = id_employee;
+      }
+  
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify(bodyData),
       });
-
-      console.log(response);
-
+  
       if (!response.ok) {
-        const errorText = await response.text(); // спочатку як текст
+        const errorText = await response.text();
         console.error('Raw server response:', errorText);
-        
         try {
           const errorData = JSON.parse(errorText);
           console.error('Parsed server error:', errorData);
         } catch (parseError) {
           console.error('Could not parse error as JSON:', parseError);
         }
-        
         throw new Error(`Server returned ${response.status}: ${errorText}`);
       }
-
+  
       await fetchEmployees();
       setActiveTab('list');
       resetForm();
@@ -136,7 +159,7 @@ const EmployeeSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   const handleDelete = async (id) => {
     if (window.confirm(t('employees.messages.deleteConfirm'))) {

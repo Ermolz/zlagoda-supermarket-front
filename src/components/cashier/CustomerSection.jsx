@@ -33,6 +33,18 @@ const CustomerSection = () => {
     fetchCustomers();
   }, [sortField, filterDiscount]);
 
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim()) {
+        performSearch();
+      } else {
+        fetchCustomers();
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
   const fetchCustomers = async () => {
     setLoading(true);
     setError('');
@@ -70,24 +82,75 @@ const CustomerSection = () => {
     }
   };  
 
+  const performSearch = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const params = new URLSearchParams();
+      
+      params.append('surname', searchQuery.trim()); 
+      
+      if (sortField) {
+        params.append('sort', sortField);
+      }
+
+      const response = await fetch(`http://localhost:3000/api/cashier/customers/search?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      });
+
+      const text = await response.text();
+
+      if (!response.ok) {
+        let errorMessage = 'Не вдалося виконати пошук клієнтів';
+        try {
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.error || errorData.message || errorMessage; 
+        } catch {}
+        throw new Error(errorMessage);
+      }
+
+      const data = JSON.parse(text);
+      setCustomers(data);
+    } catch (err) {
+      console.error('Помилка при пошуку клієнтів:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // UC1: Додавання нових клієнтів
   // UC2: Редагування даних клієнтів
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+  
     const token = localStorage.getItem('accessToken');
-
-    console.log('formData:', formData);
+  
+    //console.log('formData:', formData);
   
     try {
-      const response = await fetch('http://localhost:3000/api/manager/customer-cards', {
-        method: activeTab === 'edit' ? 'PUT' : 'POST',
+      const url = activeTab === 'edit'
+        ? `http://localhost:3000/api/cashier/customer-cards/${formData.card_number}`
+        : 'http://localhost:3000/api/cashier/customer-cards';
+  
+      const method = activeTab === 'edit' ? 'PUT' : 'POST';
+  
+      // Створюємо копію formData без card_number
+      const { card_number, ...bodyData } = formData;
+
+      //console.log('bodyData:', bodyData);
+  
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(bodyData), // надсилаємо дані без card_number
       });
   
       if (!response.ok) throw new Error('Failed to save customer');
@@ -100,28 +163,8 @@ const CustomerSection = () => {
     } finally {
       setLoading(false);
     }
-  };
-  
+  };  
 
-  // UC3: Видалення даних про клієнтів
-  const handleDelete = async (id) => {
-    if (!window.confirm('Ви впевнені, що хочете видалити цього клієнта?')) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/customers/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('Failed to delete customer');
-
-      await fetchCustomers();
-    } catch (error) {
-      console.error('Error deleting customer:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -274,7 +317,7 @@ const CustomerSection = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCustomers.map((customer) => (
+                {customers.map((customer) => (
                   <tr key={customer.card_number}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{customer.card_number}</div>
@@ -300,12 +343,6 @@ const CustomerSection = () => {
                         className="text-indigo-600 hover:text-indigo-900 mr-4"
                       >
                         {t('customers.actions.edit')}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(customer.card_number)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        {t('customers.actions.delete')}
                       </button>
                     </td>
                   </tr>

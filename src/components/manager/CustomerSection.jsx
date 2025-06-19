@@ -75,19 +75,23 @@ const CustomerSection = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    const token = localStorage.getItem('accessToken');
-
-    console.log('formData:', formData);
   
+    const token = localStorage.getItem('accessToken');
+    
     try {
-      const response = await fetch('http://localhost:3000/api/manager/customer-cards', {
-        method: activeTab === 'edit' ? 'PUT' : 'POST',
+      const url = activeTab === 'edit'
+        ? `http://localhost:3000/api/manager/customer-cards/${formData.card_number}`
+        : 'http://localhost:3000/api/manager/customer-cards';
+  
+      const method = activeTab === 'edit' ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData), // надсилаємо дані без card_number
       });
   
       if (!response.ok) throw new Error('Failed to save customer');
@@ -100,7 +104,7 @@ const CustomerSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  };  
   
 
   // UC3: Видалення даних про клієнтів
@@ -108,7 +112,7 @@ const CustomerSection = () => {
     console.log('🔍 Спроба видалення клієнта з ID:', id);
     console.log('🔍 Тип ID:', typeof id);
     
-    if (window.confirm(t('customer.messages.deleteConfirm'))) {
+    if (window.confirm(t('Ви впевнені що хочете видалити клієнта?'))) {
       setLoading(true);
       setError(''); // Очищаємо попередні помилки
       
