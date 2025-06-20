@@ -217,7 +217,7 @@ const CategorySection = () => {
                 id="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Пошук за назвою або номером"
+                placeholder="Пошук за назвою"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-s px-3 py-2"
               />
             </div>

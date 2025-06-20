@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import EmployeeSection from '../components/manager/EmployeeSection';
 import CustomerSection from '../components/manager/CustomerSection';
 import ProductSection from '../components/manager/ProductSection';
+import StoreProductSection from '../components/manager/StoreProductSection';
 import CategorySection from '../components/manager/CategorySection';
 import ReportSection from '../components/manager/ReportSection';
 import CheckSection from '../components/manager/CheckSection';
@@ -45,6 +46,16 @@ const ManagerPage = () => {
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      ),
+    },
+    {
+      id: 'storeProducts',
+      title: t('cashier.navigation.storeProducts.title'),
+      description: t('cashier.navigation.storeProducts.description'),
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.2 6h12.4M10 17a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
         </svg>
       ),
     },
@@ -98,6 +109,8 @@ const ManagerPage = () => {
         return <CustomerSection />;
       case 'products':
         return <ProductSection />;
+      case 'storeProducts':
+        return <StoreProductSection />;
       case 'categories':
         return <CategorySection />;
       case 'checks':

@@ -38,12 +38,21 @@ const CustomerSection = () => {
     setError('');
   
     try {
+      let url = 'http://localhost:3000/api/manager/customer-cards';
+  
+      if (filterDiscount !== 'all') {
+        url = `http://localhost:3000/api/manager/customer-cards/percent/${filterDiscount}`;
+      }
+  
       const params = new URLSearchParams();
       if (sortField) params.append('sort', sortField);
-      if (filterDiscount !== 'all') params.append('percent', filterDiscount);
       if (searchQuery.trim()) params.append('search', searchQuery.trim());
   
-      const response = await fetch(`http://localhost:3000/api/manager/customer-cards`, {
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+  
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
         },
@@ -68,7 +77,8 @@ const CustomerSection = () => {
     } finally {
       setLoading(false);
     }
-  };  
+  };
+  
 
   // UC1: Додавання нових клієнтів
   // UC2: Редагування даних клієнтів
@@ -276,8 +286,6 @@ const CustomerSection = () => {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
               >
                 <option value="surname">За прізвищем</option>
-                <option value="card_number">За номером карти</option>
-                <option value="percent">За відсотком знижки</option>
               </select>
             </div>
             <div>

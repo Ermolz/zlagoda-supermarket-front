@@ -64,7 +64,7 @@ const CashierProfileSection = () => {
         
         if (response.ok) {
           const data = await response.json();
-          console.log(data)
+          // console.log(data)
           setProfile(data);
         } else {
           const errorData = await response.json().catch(() => ({ message: 'Невідома помилка' }));
