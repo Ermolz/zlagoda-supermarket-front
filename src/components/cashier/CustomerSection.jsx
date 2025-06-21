@@ -33,26 +33,29 @@ const CustomerSection = () => {
     fetchCustomers();
   }, [sortField, filterDiscount]);
 
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim()) {
+        performSearch();
+      } else {
+        fetchCustomers();
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
   const fetchCustomers = async () => {
     setLoading(true);
     setError('');
   
     try {
-      let url = 'http://localhost:3000/api/manager/customer-cards';
-  
-      if (filterDiscount !== 'all') {
-        url = `http://localhost:3000/api/manager/customer-cards/percent/${filterDiscount}`;
-      }
-  
       const params = new URLSearchParams();
       if (sortField) params.append('sort', sortField);
+      if (filterDiscount !== 'all') params.append('percent', filterDiscount);
       if (searchQuery.trim()) params.append('search', searchQuery.trim());
   
-      if (params.toString()) {
-        url += `?${params.toString()}`;
-      }
-  
-      const response = await fetch(url, {
+      const response = await fetch(`http://localhost:3000/api/cashier/customers`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
         },
@@ -77,8 +80,47 @@ const CustomerSection = () => {
     } finally {
       setLoading(false);
     }
+  };  
+
+  const performSearch = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const params = new URLSearchParams();
+      
+      params.append('surname', searchQuery.trim()); 
+      
+      if (sortField) {
+        params.append('sort', sortField);
+      }
+
+      const response = await fetch(`http://localhost:3000/api/cashier/customers/search?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      });
+
+      const text = await response.text();
+
+      if (!response.ok) {
+        let errorMessage = 'Не вдалося виконати пошук клієнтів';
+        try {
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.error || errorData.message || errorMessage; 
+        } catch {}
+        throw new Error(errorMessage);
+      }
+
+      const data = JSON.parse(text);
+      setCustomers(data);
+    } catch (err) {
+      console.error('Помилка при пошуку клієнтів:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
-  
 
   // UC1: Додавання нових клієнтів
   // UC2: Редагування даних клієнтів
@@ -87,21 +129,28 @@ const CustomerSection = () => {
     setLoading(true);
   
     const token = localStorage.getItem('accessToken');
-    
+  
+    //console.log('formData:', formData);
+  
     try {
       const url = activeTab === 'edit'
-        ? `http://localhost:3000/api/manager/customer-cards/${formData.card_number}`
-        : 'http://localhost:3000/api/manager/customer-cards';
+        ? `http://localhost:3000/api/cashier/customer-cards/${formData.card_number}`
+        : 'http://localhost:3000/api/cashier/customer-cards';
   
       const method = activeTab === 'edit' ? 'PUT' : 'POST';
+  
+      // Створюємо копію formData без card_number
+      const { card_number, ...bodyData } = formData;
 
+      //console.log('bodyData:', bodyData);
+  
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(formData), // надсилаємо дані без card_number
+        body: JSON.stringify(bodyData), // надсилаємо дані без card_number
       });
   
       if (!response.ok) throw new Error('Failed to save customer');
@@ -115,77 +164,7 @@ const CustomerSection = () => {
       setLoading(false);
     }
   };  
-  
 
-  // UC3: Видалення даних про клієнтів
-  const handleDelete = async (id) => {
-    console.log('🔍 Спроба видалення клієнта з ID:', id);
-    console.log('🔍 Тип ID:', typeof id);
-    
-    if (window.confirm(t('Ви впевнені що хочете видалити клієнта?'))) {
-      setLoading(true);
-      setError(''); // Очищаємо попередні помилки
-      
-      try {
-        const token = localStorage.getItem('accessToken');
-        console.log('🔍 Токен авторизації:', token ? 'Присутній' : 'Відсутній');
-        
-        const url = `http://localhost:3000/api/manager/customer-cards/${id}`;
-        console.log('🔍 URL запиту:', url);
-        
-        const response = await fetch(url, {
-          method: 'DELETE',
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-  
-        console.log('🔍 Статус відповіді:', response.status);
-        console.log('🔍 Статус текст:', response.statusText);
-  
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.log('🔍 Текст помилки від сервера:', errorText);
-          
-          let errorMessage = 'Не вдалося видалити клієнта';
-          let serverError = null;
-          
-          try {
-            serverError = JSON.parse(errorText);
-            errorMessage = serverError.message || serverError.error || errorMessage;
-            console.log('🔍 Розпарсена помилка:', serverError);
-          } catch (parseError) {
-            console.log('🔍 Не вдалося розпарсити помилку як JSON:', parseError);
-          }
-          
-          // Показуємо детальну інформацію про помилку
-          if (response.status === 400) {
-            errorMessage = `Помилка запиту: ${errorMessage}. Можливо, неправильний формат номера карти або клієнта не існує.`;
-          } else if (response.status === 401) {
-            errorMessage = 'Помилка авторизації. Будь ласка, увійдіть в систему знову.';
-          } else if (response.status === 403) {
-            errorMessage = 'Недостатньо прав для видалення клієнта.';
-          } else if (response.status === 404) {
-            errorMessage = 'Клієнта з таким номером карти не знайдено.';
-          }
-          
-          throw new Error(errorMessage);
-        }
-  
-        console.log('✅ Клієнт успішно видалений');
-        
-        // Успішне видалення - оновлюємо список
-        await fetchCustomers();
-        
-      } catch (err) {
-        console.error('❌ Помилка при видаленні клієнта:', err);
-        setError(err.message || 'Невідома помилка при видаленні клієнта');
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -255,19 +234,6 @@ const CustomerSection = () => {
           >
             {t('customers.title')}
           </button>
-          <button
-            onClick={() => {
-              setActiveTab('add');
-              resetForm();
-            }}
-            className={`${
-              activeTab === 'add'
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-          >
-            {t('customers.form.add')}
-          </button>
         </nav>
       </div>
 
@@ -289,23 +255,6 @@ const CustomerSection = () => {
               </select>
             </div>
             <div>
-              <label htmlFor="discount" className="block text-sm font-medium text-gray-700">
-                Відсоток знижки
-              </label>
-              <select
-                id="discount"
-                value={filterDiscount}
-                onChange={(e) => setFilterDiscount(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
-              >
-                {discountOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
               <label htmlFor="search" className="block text-sm font-medium text-gray-700">
                 {t('common.filters.search')}
               </label>
@@ -314,7 +263,7 @@ const CustomerSection = () => {
                 id="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('customers.filters.searchPlaceholder')}
+                placeholder={t('Пошук за прізвищем')}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
               />
             </div>
@@ -349,7 +298,7 @@ const CustomerSection = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCustomers.map((customer) => (
+                {customers.map((customer) => (
                   <tr key={customer.card_number}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{customer.card_number}</div>
@@ -375,12 +324,6 @@ const CustomerSection = () => {
                         className="text-indigo-600 hover:text-indigo-900 mr-4"
                       >
                         {t('customers.actions.edit')}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(customer.card_number)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        {t('customers.actions.delete')}
                       </button>
                     </td>
                   </tr>

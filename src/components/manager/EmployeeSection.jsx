@@ -9,7 +9,7 @@ const EmployeeSection = () => {
   const [error, setError] = useState(null);
   const [sortField, setSortField] = useState('name');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [activeTab, setActiveTab] = useState('list'); // list, add, edit
+  const [activeTab, setActiveTab] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
@@ -24,8 +24,11 @@ const EmployeeSection = () => {
     phone_number: '',
     city: '',
     street: '',
-    zip_code: ''
+    zip_code: '',
+    email: '',
+    password: ''
   });
+  
 
   useEffect(() => {
     fetchEmployees();
@@ -34,18 +37,27 @@ const EmployeeSection = () => {
   const fetchEmployees = async () => {
     setLoading(true);
     setError('');
-
+  
     try {
+      let url;
       const params = new URLSearchParams();
-      if (sortField) params.append('sort', sortField);
-      if (searchQuery.trim()) params.append('search', searchQuery.trim());
-
-      const response = await fetch(`http://localhost:3000/api/manager/employees?${params.toString()}`, {
+  
+      if (sortField === 'role') {
+        url = `http://localhost:3000/api/manager/employees/cashiers`;
+      } else if (searchQuery.trim()) {
+        url = `http://localhost:3000/api/manager/employees/search?surname=${encodeURIComponent(searchQuery.trim())}`;
+      } else {
+        if (sortField) params.append('sort', sortField);
+        url = `http://localhost:3000/api/manager/employees?${params.toString()}`;
+      }
+      
+  
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
         },
       });
-
+  
       if (!response.ok) {
         let errorMessage = 'Не вдалося отримати список співробітників';
         try {
@@ -54,9 +66,9 @@ const EmployeeSection = () => {
         } catch {}
         throw new Error(errorMessage);
       }
-
+  
       const data = await response.json();
-      
+  
       const transformedData = data.map(emp => ({
         id_employee: emp.id_employee,
         surname: emp.empl_surname,
@@ -71,7 +83,7 @@ const EmployeeSection = () => {
         street: emp.street,
         zip_code: emp.zip_code,
       }));
-
+  
       setEmployees(transformedData);
     } catch (err) {
       console.error('Помилка при отриманні співробітників:', err);
@@ -80,59 +92,124 @@ const EmployeeSection = () => {
       setLoading(false);
     }
   };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    const dataToSend = {
-      id_employee: formData.id_employee,
-      surname: formData.surname,
-      name: formData.name,
-      patronymic: formData.patronymic,
-      role: formData.role,
-      salary: formData.salary,
-      date_of_birth: formData.dateOfBirth,
-      date_of_start: formData.dateOfStart,
-      phone_number: formData.phone_number,
-      city: formData.city,
-      street: formData.street,
-      zip_code: formData.zip_code
-    };
-
-    console.log(dataToSend)
-
+  
+    const token = localStorage.getItem('accessToken');
+  
     try {
-      const response = await fetch('http://localhost:3000/api/manager/employees', {
-        method: activeTab === 'edit' ? 'PUT' : 'POST',
+      const isEdit = activeTab === 'edit';
+  
+      const url = isEdit
+        ? `http://localhost:3000/api/manager/employees/${formData.id_employee}`
+        : 'http://localhost:3000/api/manager/employees';
+  
+      const method = isEdit ? 'PUT' : 'POST';
+  
+      // Використовуємо правильні назви полів з formData
+      const {
+        surname = '',
+        name = '',
+        patronymic = '',
+        role = '',
+        salary = '',
+        dateOfBirth = '',
+        dateOfStart = '',
+        phone_number = '',
+        city = '',
+        street = '',
+        zip_code = '',
+        email = '',
+        password = ''
+      } = formData || {};      
+  
+      // Логування для дебагу
+      console.log('FormData before submission:', formData);
+  
+      // Перевірка обов'язкових полів
+      const requiredFields = [
+        { field: 'surname', value: surname },
+        { field: 'name', value: name },
+        { field: 'role', value: role },
+        { field: 'salary', value: salary },
+        { field: 'dateOfBirth', value: dateOfBirth },
+        { field: 'dateOfStart', value: dateOfStart },
+        { field: 'phone_number', value: phone_number },
+        { field: 'city', value: city },
+        { field: 'street', value: street },
+        { field: 'zip_code', value: zip_code },
+        { field: 'email', value: email }
+      ];
+
+      // Для нових співробітників password також обов'язковий
+      if (!isEdit) {
+        requiredFields.push({ field: 'password', value: password });
+      }
+      
+      const missingFields = requiredFields.filter(({ value }) => {
+        return !value || value.toString().trim() === '';
+      });
+  
+      if (missingFields.length > 0) {
+        console.error('Missing required fields:', missingFields.map(f => f.field));
+        alert(`Заповніть обов'язкові поля: ${missingFields.map(f => f.field).join(', ')}`);
+        return;
+      }
+  
+      const bodyData = {
+        empl_surname: surname.trim(),
+        empl_name: name.trim(),
+        empl_patronymic: patronymic.trim(),
+        empl_role: role.trim(),
+        salary: parseFloat(salary) || 0,
+        date_of_birth: dateOfBirth,
+        date_of_start: dateOfStart,
+        phone_number: phone_number.trim(),
+        city: city.trim(),
+        street: street.trim(),
+        zip_code: zip_code.trim(),
+        email: email.trim(),
+        password: password.trim()
+      };
+      
+      // Для edit режиму, якщо password порожній - не відправляємо його
+      if (isEdit && !password.trim()) {
+        delete bodyData.password;
+      }
+  
+      console.log('Body data to send:', bodyData);
+  
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify(bodyData),
       });
-
-      console.log(response);
-
+  
       if (!response.ok) {
-        const errorText = await response.text(); // спочатку як текст
+        const errorText = await response.text();
         console.error('Raw server response:', errorText);
-        
         try {
           const errorData = JSON.parse(errorText);
           console.error('Parsed server error:', errorData);
+          throw new Error(errorData.message || `Server error: ${response.status}`);
         } catch (parseError) {
           console.error('Could not parse error as JSON:', parseError);
+          throw new Error(`Server returned ${response.status}: ${errorText}`);
         }
-        
-        throw new Error(`Server returned ${response.status}: ${errorText}`);
       }
-
+  
       await fetchEmployees();
       setActiveTab('list');
       resetForm();
     } catch (error) {
       console.error('Error saving employee:', error);
+      alert('Помилка при збереженні співробітника: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -166,7 +243,9 @@ const EmployeeSection = () => {
       phone_number: employee.phone_number,
       city: employee.city,
       street: employee.street,
-      zip_code: employee.zip_code
+      zip_code: employee.zip_code,
+      email: employee.email || '',
+      password: ''
     });
     setActiveTab('edit');
   };
@@ -184,7 +263,9 @@ const EmployeeSection = () => {
       phone_number: '',
       city: '',
       street: '',
-      zip_code: ''
+      zip_code: '',
+      email: '',
+      password: ''
     });
   };
 
@@ -196,16 +277,13 @@ const EmployeeSection = () => {
     }));
   };
 
-  // Фільтрація співробітників за пошуком
-  const filteredEmployees = employees.filter(employee => {
-    if (searchQuery) {
-      return employee.surname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             employee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             employee.phone_number.includes(searchQuery) ||
-             employee.id_employee.toString().includes(searchQuery);
-    }
-    return true;
-  });
+  if (loading && employees.length === 0) {
+    return <div className="p-6 text-center">Завантаження...</div>;
+  }
+
+  if (error && employees.length === 0) {
+    return <div className="p-6 text-center text-red-600">Помилка: {error}</div>;
+  }
 
   return (
     <div className="p-6">
@@ -257,10 +335,8 @@ const EmployeeSection = () => {
                 onChange={(e) => setSortField(e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
               >
-                <option value="name">За ім'ям</option>
                 <option value="surname">За прізвищем</option>
                 <option value="role">За посадою</option>
-                <option value="salary">За зарплатою</option>
               </select>
             </div>
             <div>
@@ -272,7 +348,7 @@ const EmployeeSection = () => {
                 id="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Пошук за ім'ям, прізвищем, телефоном або ID"
+                placeholder="Пошук за прізвищем"
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
               />
             </div>
@@ -299,7 +375,7 @@ const EmployeeSection = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredEmployees.map((employee) => (
+                {employees.map((employee) => (
                   <tr key={employee.id_employee}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.id_employee}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-900">{employee.surname}</td>
@@ -335,28 +411,6 @@ const EmployeeSection = () => {
                 {activeTab === 'edit' ? 'Редагування інформації про співробітника' : 'Додавання нового співробітника'}
               </h3>
             </div>
-
-            {/* ID тільки при додаванні */}
-            {!selectedEmployee && (
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <label htmlFor="id_employee" className="block text-sm font-medium text-gray-700 mb-2">
-                  Номер працівника *
-                </label>
-                <input
-                  type="text"
-                  name="id_employee"
-                  id="id_employee"
-                  required
-                  value={formData.id_employee}
-                  onChange={handleChange}
-                  placeholder="Введіть унікальний числовий ідентифікатор"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                />
-                <p className="mt-1 text-sm text-gray-500">
-                  Введіть унікальний числовий ідентифікатор працівника
-                </p>
-              </div>
-            )}
 
             {/* Personal Information */}
             <div>
@@ -443,6 +497,7 @@ const EmployeeSection = () => {
                       id="salary"
                       required
                       min="0"
+                      step="0.01"
                       value={formData.salary}
                       onChange={handleChange}
                       placeholder="0"
@@ -500,6 +555,39 @@ const EmployeeSection = () => {
                     value={formData.phone_number}
                     onChange={handleChange}
                     placeholder="+380 XX XXX XXXX"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('Пошта')} *
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    id="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="example@example.com"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t('Пароль')} {activeTab === 'add' ? '*' : '(залиште порожнім для збереження поточного)'}
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    id="password"
+                    required={activeTab === 'add'}
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder={activeTab === 'add' ? "********" : "Залиште порожнім для збереження поточного"}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   />
                 </div>

@@ -31,6 +31,72 @@ const ReportSection = () => {
     };
   };
 
+  // 9. Переглянути список усіх чеків, що створив касир за цей день
+  const fetchCashierChecksToday = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/cashier/checks/today`, {
+        headers: getAuthHeaders()
+      });
+      if (!response.ok) throw new Error('Не вдалося отримати чеки за сьогодні');
+      const data = await response.json();
+      setReportData(data);
+    } catch (error) {
+      console.error('Помилка при отриманні чеків за сьогодні:', error);
+      setReportData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 10. Переглянути список усіх чеків, що створив касир за певний період часу
+  const fetchCashierChecksByPeriod = async () => {
+    setLoading(true);
+  
+    try {
+      // Переконайся, що дати — рядки у форматі YYYY-MM-DD
+      const startDateStr = typeof dateRange.startDate === 'string'
+        ? dateRange.startDate
+        : dateRange.startDate?.toISOString().slice(0, 10);
+  
+      const endDateStr = typeof dateRange.endDate === 'string'
+        ? dateRange.endDate
+        : dateRange.endDate?.toISOString().slice(0, 10);
+  
+      if (!startDateStr || !endDateStr) {
+        throw new Error('Некоректні дати');
+      }
+  
+      const params = new URLSearchParams({
+        startDate: startDateStr,
+        endDate: endDateStr
+      });
+  
+      const response = await fetch(`${API_BASE_URL}/api/cashier/checks?${params.toString()}`, {
+        headers: getAuthHeaders()
+      });
+  
+      if (response.status === 401) {
+        console.error("Помилка авторизації! Перенаправлення на сторінку входу...");
+        throw new Error('Сесія закінчилася або ви не авторизовані.');
+      }
+  
+      if (!response.ok) {
+        throw new Error('Не вдалося отримати чеки за період');
+      }
+  
+      const data = await response.json();
+      setReportData(data);
+    } catch (error) {
+      console.error('Помилка при отриманні чеків за період:', error);
+      alert(error.message);
+      setReportData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+
   // 11. За номером чеку вивести усю інформацію про даний чек
   const fetchCheckDetailsByNumber = async () => {
     if (!checkNumberInput) {
@@ -39,7 +105,7 @@ const ReportSection = () => {
     }
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/manager/checks/${checkNumberInput}`, {
+      const response = await fetch(`${API_BASE_URL}/api/cashier/checks/${checkNumberInput}`, {
         headers: getAuthHeaders() // Використання авторизації
       });
       if (!response.ok) {
@@ -63,7 +129,7 @@ const ReportSection = () => {
   const fetchPromotionalProducts = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/manager/store-products/promotional`, {
+      const response = await fetch(`${API_BASE_URL}/api/cashier/store-products/promotional`, {
         headers: getAuthHeaders() // Використання авторизації
       });
       if (!response.ok) throw new Error('Не вдалося отримати акційні товари');
@@ -80,7 +146,7 @@ const ReportSection = () => {
   const fetchNonPromotionalProducts = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/manager/store-products/non-promotional`, {
+      const response = await fetch(`${API_BASE_URL}/api/cashier/store-products/non-promotional`, {
         headers: getAuthHeaders() // Використання авторизації
       });
       if (!response.ok) throw new Error('Не вдалося отримати акційні товари');
@@ -98,7 +164,7 @@ const ReportSection = () => {
     if (!upcInput) return alert('Будь ласка, введіть UPC-код товару.');
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/manager/store-products/${upcInput}`, { headers: getAuthHeaders() });
+      const response = await fetch(`${API_BASE_URL}/api/cashier/store-products/${upcInput}`, { headers: getAuthHeaders() });
       if (!response.ok) throw new Error('Не вдалося знайти товар за UPC.');
       const data = await response.json();
       setReportData(Array.isArray(data) ? data : [data]);
@@ -113,16 +179,32 @@ const ReportSection = () => {
 
   // Обробка генерації звіту
   const handleGenerateReport = async () => {
+    if (activeReport === 'cashierChecksPeriod') {
+      if (!dateRange.startDate || !dateRange.endDate) {
+        alert('Будь ласка, оберіть початкову та кінцеву дати.');
+        return;
+      }
+      if (new Date(dateRange.startDate) > new Date(dateRange.endDate)) {
+        alert('Дата початку не може бути пізніше дати завершення.');
+        return;
+      }
+    }
+
     switch (activeReport) {
+      case 'cashierChecksToday':
+        await fetchCashierChecksToday();
+        break;
+      case 'cashierChecksPeriod':
+        await fetchCashierChecksByPeriod();
+        break;
+      case 'checkDetails':
+        await fetchCheckDetailsByNumber();
+        break;
       case 'promotionalProducts':
         await fetchPromotionalProducts();
         break;
       case 'NonPromotionalProducts':
         await fetchNonPromotionalProducts();
-        break;
-      case 'checkDetails':
-        await fetchCheckDetailsByNumber();
-        break;
       case 'UPCsearch':
         await fetchProductsByUPC();
       default:
@@ -378,7 +460,7 @@ const ReportSection = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.product_name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.producer}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.product_number}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(parseFloat(product.selling_price)).toFixed(2)} грн</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.selling_price} грн</td>
                     </tr>
                   ))}
                 </tbody>
@@ -391,8 +473,8 @@ const ReportSection = () => {
                     <tr>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">UPC</th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Назва товару</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість в магазині</th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Характеристики</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Виробник</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість на складі</th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ціна</th>
                     </tr>
                   </thead>
@@ -400,10 +482,10 @@ const ReportSection = () => {
                     {reportData.map((product) => (
                       <tr key={product.UPC || product.id_product}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.UPC}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.quantity}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.characteristics}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(parseFloat(product.price)).toFixed(2)} грн</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.product_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.producer}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.product_number}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(parseFloat(product.selling_price)).toFixed(2)} грн</td>
                       </tr>
                     ))}
                   </tbody>
@@ -430,6 +512,9 @@ const ReportSection = () => {
               onChange={(e) => setActiveReport(e.target.value)}
               className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             >
+              <option value="cashierChecksToday">Чеки касира за сьогодні</option>
+              <option value="cashierChecksPeriod">Чеки касира за період</option>
+              <option value="checkDetails">Деталізація чеку за номером</option>
               <option value="promotionalProducts">Акційні товари</option>
               <option value="NonPromotionalProducts">Не акційні товари</option>
               <option value="UPCsearch">Пошук за UPC</option>
